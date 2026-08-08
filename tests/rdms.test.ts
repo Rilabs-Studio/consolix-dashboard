@@ -24,23 +24,18 @@ vi.mock("@/lib/rdms", () => {
     rdmsPut: vi.fn(async () => ({})),
     rdmsDelete: vi.fn(async () => undefined),
     getTvDevices: vi.fn(async () => []),
-    getTvPackages: vi.fn(async () => []),
   };
 });
 
 import { RdmsError, rdmsPost } from "@/lib/rdms";
+import * as rdmsActions from "@/server/actions/rdms";
 import {
   broadcastTv,
   deleteTvDevice,
   registerTvDevice,
-  startTvSession,
+  setTvVolume,
 } from "@/server/actions/rdms";
-import {
-  tvBroadcastSchema,
-  tvDeviceSchema,
-  tvSessionStartSchema,
-  tvVolumeSchema,
-} from "@/lib/validations";
+import { tvBroadcastSchema, tvDeviceSchema, tvVolumeSchema } from "@/lib/validations";
 
 function fd(entries: Record<string, string>): FormData {
   const f = new FormData();
@@ -55,15 +50,6 @@ beforeEach(() => {
 });
 
 describe("validations — RDMS", () => {
-  it("tvSessionStartSchema menerima paket ATAU durasi", () => {
-    expect(tvSessionStartSchema.safeParse({ deviceId: "TV-01", packageId: "2" }).success).toBe(true);
-    expect(
-      tvSessionStartSchema.safeParse({ deviceId: "TV-01", durationMinutes: "60" }).success
-    ).toBe(true);
-  });
-  it("tvSessionStartSchema menolak tanpa paket dan tanpa durasi", () => {
-    expect(tvSessionStartSchema.safeParse({ deviceId: "TV-01" }).success).toBe(false);
-  });
   it("tvBroadcastSchema menolak pesan kosong dan mengisi default durasi", () => {
     expect(tvBroadcastSchema.safeParse({ message: "" }).success).toBe(false);
     const parsed = tvBroadcastSchema.parse({ message: "Tutup 30 menit lagi" });
@@ -79,34 +65,15 @@ describe("validations — RDMS", () => {
   });
 });
 
-describe("actions/rdms — payload ke backend Go", () => {
-  it("startTvSession memakai snake_case dan mengabaikan durasi saat ada paket", async () => {
-    const result = await startTvSession(fd({ deviceId: "TV-01", packageId: "3", durationMinutes: "60" }));
-    expect(result.error).toBeUndefined();
-    expect(rdmsPost).toHaveBeenCalledWith("/sessions", {
-      device_id: "TV-01",
-      package_id: 3,
-      duration_minutes: undefined,
-    });
+describe("actions/rdms — hanya kontrol fisik TV", () => {
+  // Siklus hidup sesi milik NestJS (pos.ts). Kalau action ini muncul lagi,
+  // papan Kasir dan TV bisa beda waktu dan sesinya tidak tertagih.
+  it("tidak lagi mengekspos mulai/perpanjang/hentikan sesi TV", () => {
+    expect(rdmsActions).not.toHaveProperty("startTvSession");
+    expect(rdmsActions).not.toHaveProperty("extendTvSession");
+    expect(rdmsActions).not.toHaveProperty("stopTvSession");
   });
-  it("startTvSession tanpa paket mengirim duration_minutes", async () => {
-    await startTvSession(fd({ deviceId: "TV-01", durationMinutes: "120" }));
-    expect(rdmsPost).toHaveBeenCalledWith("/sessions", {
-      device_id: "TV-01",
-      package_id: undefined,
-      duration_minutes: 120,
-    });
-  });
-  it("mengembalikan pesan validasi sebagai ActionResult.error, bukan throw", async () => {
-    const result = await startTvSession(fd({ deviceId: "TV-01" }));
-    expect(result.error).toBe("Pilih paket atau isi durasi");
-    expect(rdmsPost).not.toHaveBeenCalled();
-  });
-  it("mengembalikan pesan RdmsError apa adanya", async () => {
-    vi.mocked(rdmsPost).mockRejectedValueOnce(new RdmsError("Meja sedang dipakai", 409));
-    const result = await startTvSession(fd({ deviceId: "TV-01", durationMinutes: "60" }));
-    expect(result.error).toBe("Meja sedang dipakai");
-  });
+
   it("broadcastTv tanpa deviceId menyiarkan ke semua TV", async () => {
     await broadcastTv(fd({ message: "Tutup sebentar lagi", durationSeconds: "30" }));
     expect(rdmsPost).toHaveBeenCalledWith("/broadcast", {
@@ -115,11 +82,28 @@ describe("actions/rdms — payload ke backend Go", () => {
       duration_seconds: 30,
     });
   });
+
+  it("setTvVolume memakai snake_case ke device yang dituju", async () => {
+    await setTvVolume(fd({ id: "TV-01", volume: "40" }));
+    expect(rdmsPost).toHaveBeenCalledWith("/devices/TV-01/volume", { volume: 40 });
+  });
+
+  it("mengembalikan pesan validasi sebagai ActionResult.error, bukan throw", async () => {
+    const result = await broadcastTv(fd({ message: "  " }));
+    expect(result.error).toBe("Pesan tidak boleh kosong");
+    expect(rdmsPost).not.toHaveBeenCalled();
+  });
+
+  it("mengembalikan pesan RdmsError apa adanya", async () => {
+    vi.mocked(rdmsPost).mockRejectedValueOnce(new RdmsError("Server RDMS tidak dapat dihubungi.", 503));
+    const result = await broadcastTv(fd({ message: "Halo", durationSeconds: "10" }));
+    expect(result.error).toBe("Server RDMS tidak dapat dihubungi.");
+  });
 });
 
 describe("actions/rdms — role gating", () => {
-  it("CASHIER boleh memulai sesi", async () => {
-    const result = await startTvSession(fd({ deviceId: "TV-01", durationMinutes: "60" }));
+  it("CASHIER boleh menyiarkan pesan", async () => {
+    const result = await broadcastTv(fd({ message: "Halo", durationSeconds: "10" }));
     expect(result.error).toBeUndefined();
   });
   it("CASHIER ditolak mendaftarkan perangkat (butuh OPERATOR)", async () => {

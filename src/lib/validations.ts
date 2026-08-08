@@ -116,20 +116,6 @@ export const tvDeviceSchema = z.object({
   name: z.string().min(1, "Nama meja wajib diisi").max(64),
 });
 
-export const tvSessionStartSchema = z
-  .object({
-    deviceId: z.string().min(1),
-    packageId: z.coerce.number().int().positive().optional(),
-    durationMinutes: z.coerce.number().int().min(1).max(720).optional(),
-  })
-  .refine((v) => v.packageId !== undefined || v.durationMinutes !== undefined, {
-    message: "Pilih paket atau isi durasi",
-  });
-
-export const tvSessionExtendSchema = z.object({
-  durationMinutes: z.coerce.number().int().min(1, "Durasi minimal 1 menit").max(720),
-});
-
 export const tvBroadcastSchema = z.object({
   message: z.string().min(1, "Pesan tidak boleh kosong").max(200),
   deviceId: z.string().optional(),

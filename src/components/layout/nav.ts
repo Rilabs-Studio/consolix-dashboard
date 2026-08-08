@@ -19,7 +19,6 @@ import {
   Landmark,
   Bell,
   ScrollText,
-  Tv,
   MonitorSmartphone,
   Tags,
 } from "lucide-react";
@@ -37,7 +36,6 @@ export type NavItem = {
 export const NAV: NavItem[] = [
   { label: "Overview", href: "/", icon: LayoutDashboard, group: "Umum", minRole: "OPERATOR" },
   { label: "Kasir", href: "/kasir", icon: MonitorPlay, group: "Operasional", minRole: "CASHIER" },
-  { label: "Meja TV", href: "/meja-tv", icon: Tv, group: "Operasional", minRole: "CASHIER" },
   { label: "Booking", href: "/booking", icon: CalendarClock, group: "Operasional", minRole: "CASHIER" },
   { label: "Pesanan FnB", href: "/fnb/pesanan", icon: ClipboardList, group: "Operasional", minRole: "CASHIER" },
   { label: "Top Up Saldo", href: "/topup", icon: HandCoins, group: "Operasional", minRole: "CASHIER" },

@@ -1,4 +1,4 @@
-import type { TvDevice, TvPackage } from "@/lib/types";
+import type { TvDevice } from "@/lib/types";
 
 // Thin wrapper untuk API Go RDMS (../consolix-tv/backend) — timer rental TV,
 // MQTT, heartbeat. API ini TIDAK punya auth sendiri: di produksi wajib bind ke
@@ -56,14 +56,6 @@ export const rdmsDelete = <T>(path: string) => request<T>("DELETE", path);
 export async function getTvDevices(): Promise<TvDevice[]> {
   try {
     return (await rdmsGet<TvDevice[] | null>("/devices")) ?? [];
-  } catch {
-    return [];
-  }
-}
-
-export async function getTvPackages(): Promise<TvPackage[]> {
-  try {
-    return (await rdmsGet<TvPackage[] | null>("/packages")) ?? [];
   } catch {
     return [];
   }

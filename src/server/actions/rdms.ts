@@ -5,22 +5,20 @@ import { z } from "zod";
 import { RdmsError, rdmsDelete, rdmsPost, rdmsPut } from "@/lib/rdms";
 import { requireRole } from "@/lib/session";
 import { bool, str, strOrUndef } from "@/lib/form";
-import {
-  tvBroadcastSchema,
-  tvDeviceSchema,
-  tvSessionExtendSchema,
-  tvSessionStartSchema,
-  tvVolumeSchema,
-} from "@/lib/validations";
+import { tvBroadcastSchema, tvDeviceSchema, tvVolumeSchema } from "@/lib/validations";
 import type { ActionResult } from "./pos";
 
-// Mutasi RDMS dipanggil dari dialog client-heavy (meja-tv / perangkat), jadi
-// memakai pola ActionResult seperti pos.ts — error dikembalikan, bukan thrown.
-// State board tetap di-refresh oleh tick WebSocket ≤1 detik setelah mutasi.
+// Hanya kontrol fisik TV yang tinggal di sini. Siklus hidup sesi (mulai /
+// perpanjang / hentikan) sepenuhnya milik NestJS lewat `pos.ts`: booking yang
+// memegang jam, tagihan, dan laporan, sementara listener RDMS di backend yang
+// menyalakan & mematikan TV. Memanggil /sessions RDMS dari sini akan membuat
+// papan Kasir dan TV berbeda waktu — dan sesinya tidak tertagih.
+//
+// Pola ActionResult seperti pos.ts: error dikembalikan, bukan dilempar.
 async function run(action: () => Promise<unknown>): Promise<ActionResult> {
   try {
     await action();
-    revalidatePath("/meja-tv");
+    revalidatePath("/kasir");
     revalidatePath("/perangkat");
     return {};
   } catch (e) {
@@ -28,38 +26,6 @@ async function run(action: () => Promise<unknown>): Promise<ActionResult> {
     if (e instanceof z.ZodError) return { error: e.issues[0]?.message ?? "Data tidak valid" };
     throw e;
   }
-}
-
-// ---- Sesi rental ----
-
-export async function startTvSession(fd: FormData): Promise<ActionResult> {
-  await requireRole("CASHIER");
-  return run(() => {
-    const v = tvSessionStartSchema.parse({
-      deviceId: str(fd, "deviceId"),
-      packageId: strOrUndef(fd, "packageId"),
-      durationMinutes: strOrUndef(fd, "durationMinutes"),
-    });
-    return rdmsPost("/sessions", {
-      device_id: v.deviceId,
-      package_id: v.packageId,
-      // Durasi hanya relevan tanpa paket — paket sudah membawa durasinya sendiri.
-      duration_minutes: v.packageId !== undefined ? undefined : v.durationMinutes,
-    });
-  });
-}
-
-export async function extendTvSession(fd: FormData): Promise<ActionResult> {
-  await requireRole("CASHIER");
-  return run(() => {
-    const v = tvSessionExtendSchema.parse({ durationMinutes: str(fd, "durationMinutes") });
-    return rdmsPost(`/sessions/${str(fd, "id")}/extend`, { duration_minutes: v.durationMinutes });
-  });
-}
-
-export async function stopTvSession(fd: FormData): Promise<ActionResult> {
-  await requireRole("CASHIER");
-  return run(() => rdmsPost(`/sessions/${str(fd, "id")}/stop`));
 }
 
 // ---- Broadcast & audio ----

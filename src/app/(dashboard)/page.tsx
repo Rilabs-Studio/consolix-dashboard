@@ -2,19 +2,24 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CalendarClock, HandCoins, MonitorPlay, Wallet } from "lucide-react";
 import { apiGet } from "@/lib/api-client";
-import type { DashboardSummary } from "@/lib/types";
+import type { Booking, ConsoleUnit, DashboardSummary } from "@/lib/types";
 import { formatRupiah } from "@/lib/utils";
 import { getCurrentAdmin } from "@/lib/session";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
 import { RevenueChart } from "@/components/charts/revenue-chart";
+import { RunningSessions } from "./running-sessions";
 
 export default async function OverviewPage() {
   const admin = await getCurrentAdmin();
   if (admin?.role === "CASHIER") redirect("/kasir");
 
-  const summary = await apiGet<DashboardSummary>("/admin/dashboard/summary");
+  const [summary, sessions, units] = await Promise.all([
+    apiGet<DashboardSummary>("/admin/dashboard/summary"),
+    apiGet<Booking[]>("/admin/sessions/active"),
+    apiGet<ConsoleUnit[]>("/consoles/units"),
+  ]);
 
   const kpis = [
     {
@@ -82,6 +87,19 @@ export default async function OverviewPage() {
           );
         })}
       </div>
+      <div className="mt-6">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-base font-semibold text-slate-900">
+            Sesi Berjalan{" "}
+            <span className="text-sm font-normal text-slate-400">({sessions.length})</span>
+          </h2>
+          <Link href="/kasir" className="text-sm text-emerald-600 hover:underline">
+            Buka Kasir →
+          </Link>
+        </div>
+        <RunningSessions sessions={sessions} units={units} />
+      </div>
+
       <Card className="mt-6">
         <CardHeader>
           <CardTitle>Pendapatan 14 Hari Terakhir</CardTitle>
