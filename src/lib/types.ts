@@ -413,13 +413,6 @@ export interface TvDevice {
   session?: TvSession;
 }
 
-export interface TvPackage {
-  id: number;
-  name: string;
-  duration_minutes: number;
-  price: number;
-}
-
 export type TvWsMessage =
   | { type: "state"; devices: TvDevice[] }
   | { type: "call_cashier"; device_id: string };

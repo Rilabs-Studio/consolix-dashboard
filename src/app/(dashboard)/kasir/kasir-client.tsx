@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
-import type { Booking, CashShift, ConsoleUnit } from "@/lib/types";
+import type { Booking, CashShift, ConsoleUnit, TvDevice } from "@/lib/types";
 import { CONSOLE_UNIT_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "@/lib/constants";
+import { useRdmsState } from "@/lib/use-rdms-state";
 import { formatRupiah } from "@/lib/utils";
 import {
   checkInBooking,
@@ -15,12 +16,20 @@ import {
   startWalkIn,
   type ActionResult,
 } from "@/server/actions/pos";
+import { broadcastTv, setTvMute, setTvVolume } from "@/server/actions/rdms";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Label, Select } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { SubmitButton } from "@/components/forms/form-controls";
+import {
+  SESSION_CARD_TONE,
+  SessionTimer,
+  sessionTone,
+  useNow,
+} from "@/components/session/session-timer";
 
 interface BoardBooking {
   id: string;
@@ -31,6 +40,16 @@ interface BoardBooking {
   customerName: string | null;
 }
 
+type Dialog =
+  | { kind: "walkin"; unit: ConsoleUnit }
+  | { kind: "checkout"; unit: ConsoleUnit; session: BoardBooking }
+  | { kind: "extend"; unit: ConsoleUnit; session: BoardBooking }
+  | { kind: "openShift" }
+  | { kind: "closeShift" }
+  | { kind: "broadcast"; deviceId?: string }
+  | { kind: "audio"; deviceId: string }
+  | null;
+
 const STATUS_TONE: Record<string, "green" | "blue" | "yellow" | "red"> = {
   available: "green",
   in_use: "blue",
@@ -38,47 +57,60 @@ const STATUS_TONE: Record<string, "green" | "blue" | "yellow" | "red"> = {
   maintenance: "red",
 };
 
+// Kelipatan 15 menit — di bawah itu backend menolak dengan INVALID_DURATION.
+const EXTEND_DURATIONS = [15, 30, 60, 120];
+const BROADCAST_SECONDS = [5, 10, 30, 60];
+
+function durationLabel(minutes: number): string {
+  return minutes >= 60 ? `${minutes / 60} jam` : `${minutes} menit`;
+}
+
 function liveOrigin(): string {
   const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/v1";
   return base.replace(/\/v1\/?$/, "");
+}
+
+function toBoardBooking(s: Booking): [string, BoardBooking] {
+  return [
+    s.consoleUnitId,
+    {
+      id: s.id,
+      code: s.code,
+      status: s.status,
+      startAt: s.startAt,
+      endAt: s.endAt,
+      customerName: s.customerName,
+    },
+  ];
 }
 
 export function KasirClient({
   initialUnits,
   initialSessions,
   shift,
+  initialDevices,
 }: {
   initialUnits: ConsoleUnit[];
   initialSessions: Booking[];
   shift: CashShift | null;
+  initialDevices: TvDevice[];
 }) {
   const router = useRouter();
   const [units, setUnits] = useState(initialUnits);
   const [sessionByUnit, setSessionByUnit] = useState<Record<string, BoardBooking>>(() =>
-    Object.fromEntries(
-      initialSessions.map((s) => [
-        s.consoleUnitId,
-        {
-          id: s.id,
-          code: s.code,
-          status: s.status,
-          startAt: s.startAt,
-          endAt: s.endAt,
-          customerName: s.customerName,
-        },
-      ])
-    )
+    Object.fromEntries(initialSessions.map(toBoardBooking))
   );
-  const [dialog, setDialog] = useState<
-    | { kind: "walkin"; unit: ConsoleUnit }
-    | { kind: "checkout"; unit: ConsoleUnit; session: BoardBooking }
-    | { kind: "openShift" }
-    | { kind: "closeShift" }
-    | null
-  >(null);
+  const [dialog, setDialog] = useState<Dialog>(null);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const socketRef = useRef<Socket | null>(null);
+  // Satu jam untuk seluruh papan, bukan satu interval per kartu.
+  const now = useNow();
+
+  // Sisi fisik meja (online/offline, volume) datang dari WebSocket Go RDMS —
+  // sumber terpisah dari booking, dijahit ke kartu lewat unit.rdmsDeviceId.
+  const { devices, connected, calls, dismissCall } = useRdmsState(initialDevices);
+  const deviceById = useMemo(() => new Map(devices.map((d) => [d.id, d])), [devices]);
 
   // Server props change after router.refresh() — adjust state during render
   // (the React-endorsed alternative to a resync effect).
@@ -90,21 +122,7 @@ export function KasirClient({
   const [prevSessions, setPrevSessions] = useState(initialSessions);
   if (prevSessions !== initialSessions) {
     setPrevSessions(initialSessions);
-    setSessionByUnit(
-      Object.fromEntries(
-        initialSessions.map((s) => [
-          s.consoleUnitId,
-          {
-            id: s.id,
-            code: s.code,
-            status: s.status,
-            startAt: s.startAt,
-            endAt: s.endAt,
-            customerName: s.customerName,
-          },
-        ])
-      )
-    );
+    setSessionByUnit(Object.fromEntries(initialSessions.map(toBoardBooking)));
   }
 
   // Live board: Socket.IO → patch unit + session state without refetching.
@@ -136,6 +154,13 @@ export function KasirClient({
     };
   }, []);
 
+  // Error dari aksi TV muncul di luar dialog — hilangkan sendiri seperti dulu.
+  useEffect(() => {
+    if (!error || dialog) return;
+    const t = setTimeout(() => setError(null), 5000);
+    return () => clearTimeout(t);
+  }, [error, dialog]);
+
   const submit = (action: (fd: FormData) => Promise<ActionResult>) => (fd: FormData) => {
     setError(null);
     startTransition(async () => {
@@ -149,7 +174,15 @@ export function KasirClient({
     });
   };
 
+  // Dialog menyimpan id perangkat saja; datanya selalu diambil dari state live
+  // agar volume/online di dialog tidak basi (WS mengganti array tiap detik).
+  const dialogDevice =
+    dialog && "deviceId" in dialog && dialog.deviceId
+      ? deviceById.get(dialog.deviceId)
+      : undefined;
+
   const totals = shift?.totals;
+  const mappedCount = units.filter((u) => u.rdmsDeviceId).length;
 
   return (
     <div className="space-y-4">
@@ -196,59 +229,58 @@ export function KasirClient({
               <Input name="code" placeholder="AB12CD34" className="w-44 uppercase" required />
             </div>
             <SubmitButton>Check-in</SubmitButton>
-            {error && <p className="text-sm text-red-600">{error}</p>}
           </form>
         </CardContent>
       </Card>
 
+      {/* Panggilan dari meja — TV mengirimnya lewat RDMS */}
+      {calls.map((c) => (
+        <div
+          key={c.at}
+          className="flex items-center justify-between rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800"
+        >
+          <span className="font-medium">
+            🔔 Meja <b>{unitLabelForDevice(units, devices, c.deviceId)}</b> memanggil kasir!
+          </span>
+          <Button size="sm" variant="ghost" onClick={() => dismissCall(c.at)}>
+            Selesai
+          </Button>
+        </div>
+      ))}
+
+      {error && !dialog && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Status TV + broadcast massal */}
+      {mappedCount > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-slate-500">
+            {mappedCount} meja terhubung TV ·{" "}
+            <span className={connected ? "text-emerald-600" : "text-red-600"}>
+              {connected ? "● terhubung real-time" : "● terputus, mencoba ulang…"}
+            </span>
+          </p>
+          <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "broadcast" })}>
+            📢 Broadcast Semua TV
+          </Button>
+        </div>
+      )}
+
       {/* Console board */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {units.map((u) => {
-          const session = sessionByUnit[u.id];
-          return (
-            <Card key={u.id}>
-              <CardContent className="pt-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-lg font-semibold text-slate-900">{u.code}</p>
-                  <Badge tone={STATUS_TONE[u.status]}>{CONSOLE_UNIT_STATUS_LABEL[u.status]}</Badge>
-                </div>
-                <p className="text-sm text-slate-500">
-                  {u.consoleType?.name} · {u.roomType === "vip" ? "VIP" : "Reguler"}
-                </p>
-                {session ? (
-                  <div className="mt-3 space-y-2 text-sm">
-                    <p className="font-medium">{session.customerName ?? session.code}</p>
-                    <Countdown endAt={session.endAt} overtime={session.status === "overtime"} />
-                    <div className="flex gap-2">
-                      <form action={submit(extendSession)}>
-                        <input type="hidden" name="id" value={session.id} />
-                        <input type="hidden" name="addedMinutes" value="30" />
-                        <SubmitButton variant="outline" size="sm">+30m</SubmitButton>
-                      </form>
-                      <Button
-                        size="sm"
-                        onClick={() => setDialog({ kind: "checkout", unit: u, session })}
-                      >
-                        Selesai & Bayar
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  u.status === "available" && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="mt-3"
-                      onClick={() => setDialog({ kind: "walkin", unit: u })}
-                    >
-                      Mulai Walk-in
-                    </Button>
-                  )
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {units.map((u) => (
+          <UnitCard
+            key={u.id}
+            unit={u}
+            session={sessionByUnit[u.id]}
+            device={u.rdmsDeviceId ? deviceById.get(u.rdmsDeviceId) : undefined}
+            now={now}
+            onDialog={setDialog}
+          />
+        ))}
       </div>
 
       {/* Dialogs */}
@@ -280,6 +312,37 @@ export function KasirClient({
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}
             <SubmitButton className="w-full">Mulai Sesi</SubmitButton>
+          </form>
+        )}
+      </Modal>
+
+      <Modal
+        open={dialog?.kind === "extend"}
+        onClose={() => setDialog(null)}
+        title={
+          dialog?.kind === "extend"
+            ? `Perpanjang Waktu — ${dialog.unit.displayLabel ?? dialog.unit.code}`
+            : undefined
+        }
+      >
+        {dialog?.kind === "extend" && (
+          <form action={submit(extendSession)} className="space-y-3">
+            <input type="hidden" name="id" value={dialog.session.id} />
+            <div>
+              <Label>Tambahan durasi</Label>
+              <Select name="addedMinutes" defaultValue="30">
+                {EXTEND_DURATIONS.map((m) => (
+                  <option key={m} value={m}>
+                    {durationLabel(m)}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <p className="text-xs text-slate-500">
+              Dihitung dari sekarang bila waktunya sudah habis, dan TV dinyalakan lagi.
+            </p>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <SubmitButton className="w-full">Perpanjang</SubmitButton>
           </form>
         )}
       </Modal>
@@ -325,8 +388,192 @@ export function KasirClient({
           <CloseShiftForm shift={shift} error={error} onSubmit={submit(closeShift)} />
         )}
       </Modal>
+
+      {/* Broadcast — satu TV atau semua */}
+      <Modal
+        open={dialog?.kind === "broadcast"}
+        onClose={() => setDialog(null)}
+        title={dialogDevice ? `Kirim Pesan — ${dialogDevice.name}` : "Broadcast ke Semua TV"}
+      >
+        {dialog?.kind === "broadcast" && (
+          <form action={submit(broadcastTv)} className="space-y-3">
+            {dialogDevice && <input type="hidden" name="deviceId" value={dialogDevice.id} />}
+            <div>
+              <Label>Pesan</Label>
+              <Input
+                name="message"
+                placeholder={
+                  dialogDevice ? "Tulis pesan untuk pemain…" : "Contoh: Rental tutup 30 menit lagi"
+                }
+                required
+              />
+            </div>
+            <div>
+              <Label>Lama tampil di TV</Label>
+              <Select name="durationSeconds" defaultValue="10">
+                {BROADCAST_SECONDS.map((s) => (
+                  <option key={s} value={s}>
+                    {s >= 60 ? `${s / 60} menit` : `${s} detik`}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <SubmitButton className="w-full">
+              {dialogDevice ? "Kirim" : "Kirim ke Semua"}
+            </SubmitButton>
+          </form>
+        )}
+      </Modal>
+
+      {/* Audio */}
+      <Modal
+        open={dialog?.kind === "audio" && !!dialogDevice}
+        onClose={() => setDialog(null)}
+        title={dialogDevice ? `Audio — ${dialogDevice.name}` : undefined}
+      >
+        {dialog?.kind === "audio" && dialogDevice && (
+          <AudioControls device={dialogDevice} onError={setError} error={error} />
+        )}
+      </Modal>
     </div>
   );
+}
+
+/**
+ * Kartu meja: satu unit konsol dengan lapisan TV-nya. Tombolnya sengaja grid
+ * dua kolom penuh, bukan baris flex — di kolom sempit (4 kartu sejajar) teks
+ * "Selesai & Bayar" tidak muat sebaris dan dulu meluber keluar kartu.
+ */
+function UnitCard({
+  unit,
+  session,
+  device,
+  now,
+  onDialog,
+}: {
+  unit: ConsoleUnit;
+  session: BoardBooking | undefined;
+  device: TvDevice | undefined;
+  now: number | null;
+  onDialog: (d: Dialog) => void;
+}) {
+  const tone = session ? sessionTone(session.endAt, now) : "idle";
+
+  return (
+    <Card className={cn("flex h-full flex-col overflow-hidden", session && SESSION_CARD_TONE[tone])}>
+      <CardContent className="flex flex-1 flex-col gap-3 p-4">
+        {/* Judul + status: judul boleh terpotong, badge tidak ikut menyusut */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="truncate text-base font-semibold text-slate-900">
+              {unit.displayLabel ?? unit.code}
+            </p>
+            <p className="truncate text-xs text-slate-500">
+              {unit.consoleType?.name} · {unit.roomType === "vip" ? "VIP" : "Reguler"}
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <Badge tone={STATUS_TONE[unit.status]}>{CONSOLE_UNIT_STATUS_LABEL[unit.status]}</Badge>
+            {unit.rdmsDeviceId && (
+              <span
+                className={cn(
+                  "text-[10px] font-medium",
+                  device?.online ? "text-emerald-600" : "text-slate-400"
+                )}
+                title={device?.online ? "TV online" : "TV offline / belum heartbeat"}
+              >
+                ● TV
+              </span>
+            )}
+          </div>
+        </div>
+
+        {session ? (
+          <>
+            <div>
+              <p className="truncate text-sm font-medium text-slate-700">
+                {session.customerName ?? session.code}
+              </p>
+              <div className="mt-2">
+                <SessionTimer startAt={session.startAt} endAt={session.endAt} now={now} />
+              </div>
+            </div>
+            <div className="mt-auto grid grid-cols-2 gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full"
+                onClick={() => onDialog({ kind: "extend", unit, session })}
+              >
+                Perpanjang
+              </Button>
+              <Button
+                size="sm"
+                className="w-full"
+                onClick={() => onDialog({ kind: "checkout", unit, session })}
+              >
+                Bayar
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="mt-auto">
+            <p className="py-3 text-center text-sm text-slate-400">
+              {unit.status === "maintenance"
+                ? "Sedang perbaikan"
+                : unit.status === "booked"
+                  ? "Menunggu check-in"
+                  : "Kosong"}
+            </p>
+            {unit.status === "available" && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full"
+                onClick={() => onDialog({ kind: "walkin", unit })}
+              >
+                Mulai Walk-in
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Kontrol fisik TV — hanya untuk unit yang termapping */}
+        {device && (
+          <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="w-full"
+              onClick={() => onDialog({ kind: "broadcast", deviceId: device.id })}
+            >
+              📢 Pesan
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="w-full"
+              onClick={() => onDialog({ kind: "audio", deviceId: device.id })}
+            >
+              {device.muted ? "🔇" : "🔊"} Audio
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Nama meja untuk alert panggilan: pakai label unit POS, jatuh ke nama device. */
+function unitLabelForDevice(
+  units: ConsoleUnit[],
+  devices: TvDevice[],
+  deviceId: string
+): string {
+  const unit = units.find((u) => u.rdmsDeviceId === deviceId);
+  if (unit) return unit.displayLabel ?? unit.code;
+  return devices.find((d) => d.id === deviceId)?.name ?? deviceId;
 }
 
 function CloseShiftForm({
@@ -374,21 +621,53 @@ function CloseShiftForm({
   );
 }
 
-function Countdown({ endAt, overtime }: { endAt: string; overtime: boolean }) {
-  const end = useMemo(() => new Date(endAt).getTime(), [endAt]);
-  // null until mounted — Date.now() is impure during render (and would break SSR hydration).
-  const [now, setNow] = useState<number | null>(null);
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  if (now === null) return <p className="font-mono text-lg text-slate-400">…</p>;
-  const remaining = Math.floor((end - now) / 1000);
-  const abs = Math.abs(remaining);
-  const label = `${Math.floor(abs / 3600)}:${String(Math.floor((abs % 3600) / 60)).padStart(2, "0")}:${String(abs % 60).padStart(2, "0")}`;
+function AudioControls({
+  device,
+  error,
+  onError,
+}: {
+  device: TvDevice;
+  error: string | null;
+  onError: (msg: string | null) => void;
+}) {
+  const [volume, setVolume] = useState(device.volume);
+  const [pending, startTransition] = useTransition();
+
+  const apply = (action: (fd: FormData) => Promise<ActionResult>, fields: Record<string, string>) =>
+    startTransition(async () => {
+      onError(null);
+      const fd = new FormData();
+      fd.set("id", device.id);
+      for (const [k, v] of Object.entries(fields)) fd.set(k, v);
+      const result = await action(fd);
+      if (result.error) onError(result.error);
+    });
+
   return (
-    <p className={`font-mono text-lg ${remaining < 0 || overtime ? "text-red-600" : "text-slate-900"}`}>
-      {remaining < 0 ? `+${label} overtime` : label}
-    </p>
+    <div className="space-y-4">
+      <div>
+        <Label>Volume: {volume}</Label>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={volume}
+          className="w-full accent-emerald-600"
+          onChange={(e) => setVolume(Number(e.target.value))}
+          onMouseUp={() => apply(setTvVolume, { volume: String(volume) })}
+          onTouchEnd={() => apply(setTvVolume, { volume: String(volume) })}
+        />
+      </div>
+      <Button
+        variant="outline"
+        className="w-full"
+        disabled={pending}
+        onClick={() => apply(setTvMute, { muted: String(!device.muted) })}
+      >
+        {device.muted ? "🔇 Muted — klik untuk unmute" : "🔊 Aktif — klik untuk mute"}
+      </Button>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+    </div>
   );
 }
+

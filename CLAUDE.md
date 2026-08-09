@@ -46,13 +46,23 @@ socket.io-client (halaman kasir) · Vitest.
 - `src/components/{ui,forms,layout}/` — Table, Button, Card, Badge, Input, Modal, PageHeader,
   Sidebar, Topbar, ImageUpload, ArrayInput, SubmitButton, ConfirmDelete. **Gunakan ulang komponen
   ini, jangan bikin baru.**
-- Halaman `(dashboard)/kasir` adalah satu-satunya yang client-heavy: initial state dari RSC,
-  lalu di-patch event Socket.IO namespace `/live` (origin = `NEXT_PUBLIC_API_URL` tanpa `/v1`).
-- **Pengecualian aturan "semua lewat NestJS":** modul `(dashboard)/meja-tv` & `(dashboard)/perangkat`
-  bicara ke backend **Go RDMS** (`../consolix-tv/backend`, kontrak `../consolix-tv/docs/api.md`)
-  lewat `src/lib/rdms.ts` (`RDMS_API_URL`, server-side only — API Go tanpa auth, wajib privat)
-  dan WebSocket native `src/lib/use-rdms-state.ts` (`NEXT_PUBLIC_RDMS_WS_URL`, push state per detik,
-  bukan Socket.IO). Mutasi tetap Server Action + `requireRole` (`src/server/actions/rdms.ts`).
+- Halaman `(dashboard)/kasir` adalah satu-satunya yang client-heavy, dan **satu-satunya papan meja**:
+  satu kartu per `ConsoleUnit` yang menggabungkan dua sumber live — booking dari Socket.IO namespace
+  `/live` (origin = `NEXT_PUBLIC_API_URL` tanpa `/v1`) dan kondisi fisik TV dari WebSocket Go RDMS,
+  dijahit lewat `ConsoleUnit.rdmsDeviceId`. Jangan bikin papan meja kedua.
+- **Pengecualian aturan "semua lewat NestJS":** modul `(dashboard)/perangkat` dan lapisan TV di
+  kartu Kasir bicara ke backend **Go RDMS** (`../consolix-tv/backend`, kontrak
+  `../consolix-tv/docs/api.md`) lewat `src/lib/rdms.ts` (`RDMS_API_URL`, server-side only — API Go
+  tanpa auth, wajib privat) dan WebSocket native `src/lib/use-rdms-state.ts`
+  (`NEXT_PUBLIC_RDMS_WS_URL`, push state per detik, bukan Socket.IO). Mutasi tetap Server Action +
+  `requireRole` (`src/server/actions/rdms.ts`).
+- **Siklus hidup sesi hanya lewat NestJS.** `src/server/actions/rdms.ts` sengaja tidak punya
+  mulai/perpanjang/hentikan sesi: mulai = walk-in atau check-in QR, perpanjang & selesai = `pos.ts`.
+  Backend yang meneruskannya ke TV lewat listener RDMS. Memanggil `/sessions` RDMS dari dashboard
+  membuat jam Kasir dan TV berbeda, dan sesinya tidak tertagih.
+- **Tidak ada overtime.** Sesi berhenti di `endAt` (TV ikut mati) dan menunggu pembayaran; hitung
+  mundur di kartu berhenti di `00:00`, tidak menghitung naik. Lanjut main = extend, yang dihitung
+  dari saat tombol ditekan dan menyalakan TV lagi.
 
 ## Code style
 
