@@ -4,12 +4,11 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
 import type { Booking, CashShift, ConsoleUnit, TvDevice } from "@/lib/types";
-import { CONSOLE_UNIT_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "@/lib/constants";
+import { CONSOLE_UNIT_STATUS_LABEL } from "@/lib/constants";
 import { useRdmsState } from "@/lib/use-rdms-state";
 import { formatRupiah } from "@/lib/utils";
 import {
   checkInBooking,
-  checkoutSession,
   closeShift,
   extendSession,
   openShift,
@@ -24,6 +23,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input, Label, Select } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { SubmitButton } from "@/components/forms/form-controls";
+import { BillDialog } from "./bill-dialog";
 import {
   SESSION_CARD_TONE,
   SessionTimer,
@@ -347,26 +347,14 @@ export function KasirClient({
         )}
       </Modal>
 
-      <Modal
+      {/* Bill lengkap (jam main + FnB + identitas) → bayar → struk WA/cetak.
+          `key` per sesi me-remount dialog sehingga state bill/paid selalu segar. */}
+      <BillDialog
+        key={dialog?.kind === "checkout" ? dialog.session.id : "closed"}
         open={dialog?.kind === "checkout"}
+        sessionId={dialog?.kind === "checkout" ? dialog.session.id : null}
         onClose={() => setDialog(null)}
-        title={dialog?.kind === "checkout" ? `Selesai — Unit ${dialog.unit.code}` : undefined}
-      >
-        {dialog?.kind === "checkout" && (
-          <form action={submit(checkoutSession)} className="space-y-3">
-            <input type="hidden" name="id" value={dialog.session.id} />
-            <div>
-              <Label>Metode pembayaran</Label>
-              <Select name="paymentMethod" defaultValue="cash">
-                <option value="cash">{PAYMENT_METHOD_LABEL.cash}</option>
-                <option value="qris_manual">{PAYMENT_METHOD_LABEL.qris_manual}</option>
-              </Select>
-            </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            <SubmitButton className="w-full">Terima Pembayaran</SubmitButton>
-          </form>
-        )}
-      </Modal>
+      />
 
       <Modal open={dialog?.kind === "openShift"} onClose={() => setDialog(null)} title="Buka Shift">
         <form action={submit(openShift)} className="space-y-3">

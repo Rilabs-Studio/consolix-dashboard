@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ApiError, apiPost } from "@/lib/api-client";
+import { ApiError, apiGet, apiPost } from "@/lib/api-client";
 import { requireRole } from "@/lib/session";
 import { str, strOrUndef } from "@/lib/form";
+import type { SessionBill } from "@/lib/types";
 
 export interface ActionResult {
   error?: string;
@@ -73,6 +74,12 @@ export async function extendSession(fd: FormData): Promise<ActionResult> {
       addedMinutes: Number(str(fd, "addedMinutes") || 30),
     })
   );
+}
+
+/** Bill sesi untuk dialog checkout & struk (jam main + FnB + identitas). */
+export async function getSessionBill(id: string): Promise<SessionBill> {
+  await requireRole("CASHIER");
+  return apiGet<SessionBill>(`/admin/sessions/${id}/bill`);
 }
 
 export async function checkInBooking(fd: FormData): Promise<ActionResult> {

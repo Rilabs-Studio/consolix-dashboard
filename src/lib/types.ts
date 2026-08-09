@@ -157,6 +157,36 @@ export interface Booking {
   createdAt: string;
 }
 
+export interface SessionBillOrderItem {
+  name: string;
+  qty: number;
+  price: number;
+  subtotal: number;
+}
+
+export interface SessionBill {
+  bookingId: string;
+  code: string;
+  status: BookingStatus;
+  paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  unit: { code: string; displayLabel: string | null };
+  customer: { name: string | null; phone: string | null };
+  play: { startAt: string; endAt: string; durationMinutes: number; amount: number };
+  fnb: {
+    amount: number;
+    orders: {
+      id: string;
+      code: string;
+      status: string;
+      totalAmount: number;
+      items: SessionBillOrderItem[];
+    }[];
+  };
+  discountAmount: number;
+  totalAmount: number;
+}
+
 export interface ShiftTotals {
   rentalSales: number;
   fnbSales: number;

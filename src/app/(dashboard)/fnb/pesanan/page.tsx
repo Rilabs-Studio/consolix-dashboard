@@ -15,6 +15,9 @@ interface FnbOrder {
   paymentMethod: string;
   paymentStatus: string;
   customerName: string | null;
+  customerPhone: string | null;
+  /** Terisi = order menempel ke sesi (dibayar saat checkout sesi, bukan di sini). */
+  bookingId: string | null;
   createdAt: string;
   items: { name: string; qty: number }[];
 }
@@ -85,7 +88,12 @@ export default async function PesananFnbPage({
             <TR key={o.id}>
               <TD className="font-medium">
                 {o.code}
-                {o.customerName && <p className="text-xs text-slate-400">{o.customerName}</p>}
+                {o.customerName && (
+                  <p className="text-xs text-slate-400">
+                    {o.customerName}
+                    {o.customerPhone && ` · ${o.customerPhone}`}
+                  </p>
+                )}
               </TD>
               <TD>{formatDateTime(o.createdAt)}</TD>
               <TD className="text-sm">
@@ -93,11 +101,18 @@ export default async function PesananFnbPage({
               </TD>
               <TD>{formatRupiah(o.totalAmount)}</TD>
               <TD>
-                {PAYMENT_METHOD_LABEL[o.paymentMethod as keyof typeof PAYMENT_METHOD_LABEL] ?? o.paymentMethod}{" "}
-                {o.paymentStatus === "paid" ? (
-                  <Badge tone="green">Lunas</Badge>
+                {o.bookingId ? (
+                  <Badge tone="blue">Tagihan sesi</Badge>
                 ) : (
-                  <Badge tone="yellow">Belum</Badge>
+                  <>
+                    {PAYMENT_METHOD_LABEL[o.paymentMethod as keyof typeof PAYMENT_METHOD_LABEL] ??
+                      o.paymentMethod}{" "}
+                    {o.paymentStatus === "paid" ? (
+                      <Badge tone="green">Lunas</Badge>
+                    ) : (
+                      <Badge tone="yellow">Belum</Badge>
+                    )}
+                  </>
                 )}
               </TD>
               <TD>
@@ -123,7 +138,8 @@ export default async function PesananFnbPage({
                       </Button>
                     </form>
                   )}
-                  {o.paymentStatus !== "paid" && o.status !== "cancelled" && (
+                  {/* Order sesi dibayar di checkout sesi — settle di sini = dobel tagih. */}
+                  {!o.bookingId && o.paymentStatus !== "paid" && o.status !== "cancelled" && (
                     <form action={settleVoid}>
                       <input type="hidden" name="id" value={o.id} />
                       <input type="hidden" name="paymentMethod" value="cash" />
