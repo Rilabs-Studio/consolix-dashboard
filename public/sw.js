@@ -15,6 +15,10 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(data.title, {
       body: data.body,
       tag: data.tag,
+      // Notif ber-tag sama (mis. meja yang sama memanggil lagi) tetap
+      // berbunyi ulang, bukan diganti diam-diam.
+      renotify: Boolean(data.tag),
+      vibrate: [200, 100, 200],
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
       data: { url: data.url },
