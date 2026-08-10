@@ -5,7 +5,12 @@ import { z } from "zod";
 import { RdmsError, rdmsDelete, rdmsPost, rdmsPut } from "@/lib/rdms";
 import { requireRole } from "@/lib/session";
 import { bool, str, strOrUndef } from "@/lib/form";
-import { tvBroadcastSchema, tvDeviceSchema, tvVolumeSchema } from "@/lib/validations";
+import {
+  tvBroadcastSchema,
+  tvDeviceSchema,
+  tvKioskSchema,
+  tvVolumeSchema,
+} from "@/lib/validations";
 import type { ActionResult } from "./pos";
 
 // Hanya kontrol fisik TV yang tinggal di sini. Siklus hidup sesi (mulai /
@@ -57,6 +62,36 @@ export async function setTvVolume(fd: FormData): Promise<ActionResult> {
 export async function setTvMute(fd: FormData): Promise<ActionResult> {
   await requireRole("CASHIER");
   return run(() => rdmsPost(`/devices/${str(fd, "id")}/mute`, { muted: bool(fd, "muted") }));
+}
+
+// ---- Kiosk ----
+//
+// TV terkunci pada app rental selama meja idle agar penyewa tidak bisa keluar
+// lewat remote; kunci dilepas sendiri oleh TV selama sesi berjalan supaya
+// perpindahan ke input HDMI tidak diblokir. Status kiosk disimpan di TV, bukan
+// di server RDMS — jadi tidak ada state yang perlu dibaca balik ke sini.
+
+/** Mengunci kembali bersifat memulihkan proteksi → cukup CASHIER. */
+export async function lockTvKiosk(fd: FormData): Promise<ActionResult> {
+  await requireRole("CASHIER");
+  return run(() => rdmsPost(`/devices/${str(fd, "id")}/kiosk`, { locked: true }));
+}
+
+/**
+ * Membuka kunci melemahkan proteksi meja (TV bisa dipakai bebas), jadi digating
+ * di OPERATOR — sejajar dengan master data perangkat, bukan operasi kasir
+ * harian. Kasir yang butuh akses fisik saat maintenance memakai kombinasi
+ * tombol di remote (lihat consolix-tv/docs/deployment.md).
+ */
+export async function unlockTvKiosk(fd: FormData): Promise<ActionResult> {
+  await requireRole("OPERATOR");
+  return run(() => {
+    const v = tvKioskSchema.parse({ durationSeconds: str(fd, "durationSeconds") || 0 });
+    return rdmsPost(`/devices/${str(fd, "id")}/kiosk`, {
+      locked: false,
+      duration_seconds: v.durationSeconds,
+    });
+  });
 }
 
 // ---- Perangkat (master data) ----
