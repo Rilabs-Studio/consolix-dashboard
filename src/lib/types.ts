@@ -157,6 +157,22 @@ export interface Booking {
   createdAt: string;
 }
 
+/** GET /admin/fnb/menu — katalog untuk layar POS kasir. */
+export interface FnbMenuItem {
+  id: string;
+  name: string;
+  price: number;
+  stock: number;
+  imageUrl: string | null;
+  description: string | null;
+}
+
+export interface FnbMenuCategory {
+  id: string;
+  name: string;
+  items: FnbMenuItem[];
+}
+
 export interface SessionBillOrderItem {
   name: string;
   qty: number;

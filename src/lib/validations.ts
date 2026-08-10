@@ -93,6 +93,41 @@ export const expenseSchema = z.object({
   proofUrl: z.string().optional(),
 });
 
+// ---- Input manual kasir ----
+
+/**
+ * Pesanan FnB yang diketik kasir di counter. Dua mode saling eksklusif:
+ * `bookingId` terisi = tempel ke sesi berjalan (dibayar saat checkout sesi),
+ * kosong = jual lepas dan `paymentMethod` yang menentukan. `wallet` sengaja
+ * tidak ada — saldo hanya bisa didebit pemiliknya lewat app.
+ */
+export const fnbOrderSchema = z.object({
+  items: z
+    .array(z.object({ itemId: z.string().uuid(), qty: z.coerce.number().int().min(1) }))
+    .min(1, "Keranjang masih kosong"),
+  bookingId: z.string().uuid().optional(),
+  paymentMethod: z.enum(["cash", "qris_manual"]),
+  customerName: z.string().min(2, "Nama minimal 2 karakter").max(64).optional(),
+  customerPhone: z.string().max(20).optional(),
+  notes: z.string().max(200).optional(),
+});
+
+/**
+ * Sesi yang sudah selesai tapi gagal tercatat. Backend menolak sesi yang belum
+ * berakhir (`BACKFILL_NOT_PAST`) dan yang lebih mundur dari 7 hari
+ * (`BACKFILL_TOO_OLD`) — di sini hanya bentuk inputnya yang divalidasi.
+ */
+export const backfillSessionSchema = z.object({
+  consoleUnitId: z.string().uuid({ message: "Pilih konsol terlebih dulu" }),
+  startAt: z.string().min(1, "Jam mulai wajib diisi"),
+  durationMinutes: z.coerce.number().int().min(30, "Durasi minimal 30 menit"),
+  paymentMethod: z.enum(["cash", "qris_manual"]),
+  amount: rupiah.optional(),
+  customerName: z.string().max(64).optional(),
+  userPhone: z.string().max(20).optional(),
+  reason: z.string().min(5, "Alasan minimal 5 karakter"),
+});
+
 export const cashTopupSchema = z.object({
   userId: z.string().uuid({ message: "Pilih member terlebih dulu" }),
   amount: z.coerce

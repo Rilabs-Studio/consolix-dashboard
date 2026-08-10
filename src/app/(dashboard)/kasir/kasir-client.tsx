@@ -8,6 +8,7 @@ import { CONSOLE_UNIT_STATUS_LABEL } from "@/lib/constants";
 import { useRdmsState } from "@/lib/use-rdms-state";
 import { formatRupiah } from "@/lib/utils";
 import {
+  backfillSession,
   checkInBooking,
   closeShift,
   extendSession,
@@ -52,6 +53,7 @@ type Dialog =
   | { kind: "extend"; unit: ConsoleUnit; session: BoardBooking }
   | { kind: "openShift" }
   | { kind: "closeShift" }
+  | { kind: "backfill" }
   | { kind: "broadcast"; deviceId?: string }
   | { kind: "audio"; deviceId: string }
   | { kind: "kiosk"; deviceId: string }
@@ -96,11 +98,14 @@ export function KasirClient({
   initialSessions,
   shift,
   initialDevices,
+  canBackfill,
 }: {
   initialUnits: ConsoleUnit[];
   initialSessions: Booking[];
   shift: CashShift | null;
   initialDevices: TvDevice[];
+  /** Operator+ saja — backdating sesi rawan disalahgunakan. */
+  canBackfill: boolean;
 }) {
   const router = useRouter();
   const [units, setUnits] = useState(initialUnits);
@@ -237,6 +242,20 @@ export function KasirClient({
             </div>
             <SubmitButton>Check-in</SubmitButton>
           </form>
+          {canBackfill && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+              <span className="text-sm text-slate-500">
+                Sesi sudah jalan tapi tidak tercatat?
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setDialog({ kind: "backfill" })}
+              >
+                Catat Sesi Susulan
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -362,6 +381,79 @@ export function KasirClient({
         sessionId={dialog?.kind === "checkout" ? dialog.session.id : null}
         onClose={() => setDialog(null)}
       />
+
+      <Modal
+        open={dialog?.kind === "backfill"}
+        onClose={() => setDialog(null)}
+        title="Catat Sesi Susulan"
+      >
+        {dialog?.kind === "backfill" && (
+          <form action={submit(backfillSession)} className="space-y-3">
+            <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              Untuk sesi yang <b>sudah selesai</b> tapi luput dari sistem. Tersimpan langsung
+              lunas dan masuk shift yang sedang terbuka. Maksimal 7 hari ke belakang.
+            </p>
+            <div>
+              <Label>Konsol</Label>
+              <Select name="consoleUnitId" required defaultValue="">
+                <option value="" disabled>
+                  — Pilih unit —
+                </option>
+                {units.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.displayLabel || u.code}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Jam mulai</Label>
+                <Input type="datetime-local" name="startAt" required />
+              </div>
+              <div>
+                <Label>Durasi</Label>
+                <Select name="durationMinutes" defaultValue="60">
+                  {[30, 60, 90, 120, 180, 240].map((m) => (
+                    <option key={m} value={m}>
+                      {m} menit
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Metode bayar</Label>
+                <Select name="paymentMethod" defaultValue="cash">
+                  <option value="cash">Tunai</option>
+                  <option value="qris_manual">QRIS</option>
+                </Select>
+              </div>
+              <div>
+                <Label>Nominal diterima</Label>
+                <Input type="number" name="amount" min={0} step={1000} placeholder="Ikuti tarif" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Nama pelanggan</Label>
+                <Input name="customerName" placeholder="Opsional" />
+              </div>
+              <div>
+                <Label>No. HP member</Label>
+                <Input name="userPhone" placeholder="Opsional — dapat poin" />
+              </div>
+            </div>
+            <div>
+              <Label>Alasan koreksi</Label>
+              <Input name="reason" placeholder="Mis. listrik padam, sesi tidak tercatat" required />
+            </div>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <SubmitButton className="w-full">Catat Sesi</SubmitButton>
+          </form>
+        )}
+      </Modal>
 
       <Modal open={dialog?.kind === "openShift"} onClose={() => setDialog(null)} title="Buka Shift">
         <form action={submit(openShift)} className="space-y-3">

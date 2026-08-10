@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { ApiError, apiDelete, apiPatch, apiPost } from "@/lib/api-client";
 import { requireRole } from "@/lib/session";
 import { str, strOrUndef, bool } from "@/lib/form";
+import { fnbOrderSchema } from "@/lib/validations";
 import type { ActionResult } from "./pos";
 
 export async function saveFnbCategory(fd: FormData) {
@@ -51,6 +52,47 @@ export async function adjustFnbStock(fd: FormData) {
     note: strOrUndef(fd, "note"),
   });
   revalidatePath("/fnb");
+}
+
+/**
+ * Input manual kasir dari layar POS `/fnb/kasir`. Keranjang dikirim sebagai
+ * satu field JSON supaya baris-barisnya tetap berpasangan (itemId ↔ qty)
+ * tanpa mengandalkan urutan `getAll()`.
+ */
+export async function createFnbOrder(fd: FormData): Promise<ActionResult> {
+  await requireRole("CASHIER");
+
+  let items: unknown = [];
+  try {
+    items = JSON.parse(str(fd, "items") || "[]");
+  } catch {
+    return { error: "Keranjang tidak terbaca — muat ulang halaman." };
+  }
+
+  const bookingId = strOrUndef(fd, "bookingId");
+  const parsed = fnbOrderSchema.safeParse({
+    items,
+    bookingId,
+    paymentMethod: str(fd, "paymentMethod") || "cash",
+    customerName: strOrUndef(fd, "customerName"),
+    customerPhone: strOrUndef(fd, "customerPhone"),
+    notes: strOrUndef(fd, "notes"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  try {
+    await apiPost("/admin/fnb/orders", parsed.data);
+    // Jual lepas menyentuh kas shift; order yang menempel ke sesi mengubah
+    // tagihan di papan kasir. Segarkan keduanya.
+    revalidatePath("/fnb/kasir");
+    revalidatePath("/fnb/pesanan");
+    revalidatePath("/kasir");
+    revalidatePath("/keuangan/tutup-kasir");
+    return {};
+  } catch (e) {
+    if (e instanceof ApiError) return { error: e.message };
+    throw e;
+  }
 }
 
 export async function setFnbOrderStatus(fd: FormData) {
