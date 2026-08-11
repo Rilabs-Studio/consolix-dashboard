@@ -1,5 +1,7 @@
 import { apiGet } from "@/lib/api-client";
 import { getTvDevices } from "@/lib/rdms";
+import { getCurrentAdmin } from "@/lib/session";
+import { hasRole } from "@/lib/constants";
 import type { Booking, CashShift, ConsoleUnit } from "@/lib/types";
 import { PageHeader } from "@/components/layout/page-header";
 import { KasirClient } from "./kasir-client";
@@ -8,11 +10,12 @@ import { KasirClient } from "./kasir-client";
 // (booking) dan WebSocket Go RDMS (kondisi fisik TV). Keduanya dijahit lewat
 // ConsoleUnit.rdmsDeviceId — satu kartu per unit, bukan dua papan.
 export default async function KasirPage() {
-  const [units, sessions, shift, devices] = await Promise.all([
+  const [units, sessions, shift, devices, admin] = await Promise.all([
     apiGet<ConsoleUnit[]>("/consoles/units"),
     apiGet<Booking[]>("/admin/sessions/active"),
     apiGet<CashShift | null>("/admin/shifts/current"),
     getTvDevices(),
+    getCurrentAdmin(),
   ]);
 
   return (
@@ -26,6 +29,7 @@ export default async function KasirPage() {
         initialSessions={sessions}
         shift={shift}
         initialDevices={devices}
+        canBackfill={hasRole(admin?.role, "OPERATOR")}
       />
     </div>
   );

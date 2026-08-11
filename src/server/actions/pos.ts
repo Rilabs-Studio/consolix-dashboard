@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { ApiError, apiGet, apiPost } from "@/lib/api-client";
 import { requireRole } from "@/lib/session";
 import { str, strOrUndef } from "@/lib/form";
+import { backfillSessionSchema } from "@/lib/validations";
 import type { SessionBill } from "@/lib/types";
 
 export interface ActionResult {
@@ -55,6 +56,38 @@ export async function startWalkIn(fd: FormData): Promise<ActionResult> {
       customerName: strOrUndef(fd, "customerName"),
       userPhone: strOrUndef(fd, "userPhone"),
     })
+  );
+}
+
+/**
+ * Catat sesi yang sudah selesai tapi gagal tercatat (kasir lupa klik, RDMS
+ * mati, listrik padam). Operator+ karena backdating rawan disalahgunakan —
+ * backend juga menolak role di bawah operator.
+ *
+ * `startAt` datang dari input `datetime-local` (waktu lokal tanpa zona), jadi
+ * dikonversi ke ISO UTC di sini supaya kontraknya sama dengan endpoint lain.
+ */
+export async function backfillSession(fd: FormData): Promise<ActionResult> {
+  await requireRole("OPERATOR");
+
+  const local = str(fd, "startAt");
+  const parsed = backfillSessionSchema.safeParse({
+    consoleUnitId: str(fd, "consoleUnitId"),
+    startAt: local,
+    durationMinutes: str(fd, "durationMinutes"),
+    paymentMethod: str(fd, "paymentMethod") || "cash",
+    amount: strOrUndef(fd, "amount"),
+    customerName: strOrUndef(fd, "customerName"),
+    userPhone: strOrUndef(fd, "userPhone"),
+    reason: str(fd, "reason"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const startAt = new Date(local);
+  if (Number.isNaN(startAt.getTime())) return { error: "Jam mulai tidak valid" };
+
+  return run(() =>
+    apiPost("/admin/sessions/backfill", { ...parsed.data, startAt: startAt.toISOString() })
   );
 }
 
