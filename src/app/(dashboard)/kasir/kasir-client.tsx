@@ -15,7 +15,13 @@ import {
   startWalkIn,
   type ActionResult,
 } from "@/server/actions/pos";
-import { broadcastTv, setTvMute, setTvVolume } from "@/server/actions/rdms";
+import {
+  broadcastTv,
+  lockTvKiosk,
+  setTvMute,
+  setTvVolume,
+  unlockTvKiosk,
+} from "@/server/actions/rdms";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,6 +54,7 @@ type Dialog =
   | { kind: "closeShift" }
   | { kind: "broadcast"; deviceId?: string }
   | { kind: "audio"; deviceId: string }
+  | { kind: "kiosk"; deviceId: string }
   | null;
 
 const STATUS_TONE: Record<string, "green" | "blue" | "yellow" | "red"> = {
@@ -424,6 +431,17 @@ export function KasirClient({
           <AudioControls device={dialogDevice} onError={setError} error={error} />
         )}
       </Modal>
+
+      {/* Kiosk */}
+      <Modal
+        open={dialog?.kind === "kiosk" && !!dialogDevice}
+        onClose={() => setDialog(null)}
+        title={dialogDevice ? `Kiosk — ${dialogDevice.name}` : undefined}
+      >
+        {dialog?.kind === "kiosk" && dialogDevice && (
+          <KioskControls device={dialogDevice} onError={setError} error={error} />
+        )}
+      </Modal>
     </div>
   );
 }
@@ -546,6 +564,15 @@ function UnitCard({
             >
               {device.muted ? "🔇" : "🔊"} Audio
             </Button>
+            {/* Sebaris penuh: label "Kiosk" tidak muat berdampingan di kolom sempit */}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="col-span-2 w-full"
+              onClick={() => onDialog({ kind: "kiosk", deviceId: device.id })}
+            >
+              🔒 Kiosk
+            </Button>
           </div>
         )}
       </CardContent>
@@ -654,6 +681,73 @@ function AudioControls({
       >
         {device.muted ? "🔇 Muted — klik untuk unmute" : "🔊 Aktif — klik untuk mute"}
       </Button>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+/**
+ * Kontrol kiosk. TV terkunci pada app rental selama meja idle sehingga penyewa
+ * tidak bisa keluar lewat remote; kunci dilepas otomatis selama sesi berjalan
+ * agar TV bisa pindah ke input HDMI. Dialog ini untuk maintenance — buka
+ * Settings TV, update app, ganti input manual.
+ *
+ * Status kiosk tidak dibaca dari server (TV yang menyimpannya), jadi tombolnya
+ * perintah searah, bukan toggle: tidak ada state yang bisa ditampilkan di sini.
+ * Membuka kunci butuh role OPERATOR — kasir akan melihat pesan "FORBIDDEN".
+ */
+function KioskControls({
+  device,
+  error,
+  onError,
+}: {
+  device: TvDevice;
+  error: string | null;
+  onError: (msg: string | null) => void;
+}) {
+  const [pending, startTransition] = useTransition();
+
+  const apply = (action: (fd: FormData) => Promise<ActionResult>, fields: Record<string, string>) =>
+    startTransition(async () => {
+      onError(null);
+      const fd = new FormData();
+      fd.set("id", device.id);
+      for (const [k, v] of Object.entries(fields)) fd.set(k, v);
+      const result = await action(fd);
+      if (result.error) onError(result.error);
+    });
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-slate-500">
+        Saat terkunci, penyewa tidak bisa keluar dari app rental dengan remote. Kunci dilepas sendiri
+        selama sesi berjalan agar TV bisa pindah ke input HDMI.
+      </p>
+      <Button
+        variant="outline"
+        className="w-full"
+        disabled={pending}
+        onClick={() => apply(unlockTvKiosk, { durationSeconds: "300" })}
+      >
+        🔓 Buka 5 menit (terkunci sendiri setelahnya)
+      </Button>
+      <Button
+        variant="outline"
+        className="w-full"
+        disabled={pending}
+        onClick={() => apply(unlockTvKiosk, { durationSeconds: "0" })}
+      >
+        🔓 Buka sampai dikunci lagi
+      </Button>
+      <Button className="w-full" disabled={pending} onClick={() => apply(lockTvKiosk, {})}>
+        🔒 Kunci sekarang
+      </Button>
+      {!device.online && (
+        <p className="text-sm text-amber-600">
+          TV sedang offline — perintah tidak akan sampai (broker tidak menyimpan command untuk TV
+          yang terputus). Kirim ulang setelah TV online.
+        </p>
+      )}
       {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );

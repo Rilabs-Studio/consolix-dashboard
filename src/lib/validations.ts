@@ -125,3 +125,10 @@ export const tvBroadcastSchema = z.object({
 export const tvVolumeSchema = z.object({
   volume: z.coerce.number().int().min(0).max(100),
 });
+
+// Kiosk: durationSeconds hanya dipakai saat membuka kunci — 0 berarti terbuka
+// sampai dikunci lagi. Dibatasi 1 jam supaya meja tidak tertinggal terbuka
+// semalaman karena salah pilih durasi.
+export const tvKioskSchema = z.object({
+  durationSeconds: z.coerce.number().int().min(0).max(3600).default(0),
+});
