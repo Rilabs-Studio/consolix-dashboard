@@ -60,7 +60,7 @@ export function BracketClient({
 
   return (
     <div>
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <form action={run(generateBracket)}>
           <input type="hidden" name="id" value={eventId} />
           <Button type="submit" size="sm" disabled={pending}>
@@ -154,7 +154,7 @@ export function BracketClient({
                   ))}
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label>Skor {nameOf(selected.participantAId)}</Label>
                 <Input name="scoreA" type="number" min={0} />

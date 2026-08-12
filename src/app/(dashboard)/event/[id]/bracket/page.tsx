@@ -41,11 +41,11 @@ export default async function BracketPage({ params }: { params: Promise<{ id: st
               {event.registrations.length === 0 && <EmptyRow colSpan={3} label="Belum ada peserta" />}
               {event.registrations.map((r) => (
                 <TR key={r.id}>
-                  <TD className="font-medium">
+                  <TD data-label="Nama" className="font-medium">
                     {r.displayName}
                     {r.placement && <Badge tone="yellow" className="ml-2">Juara {r.placement}</Badge>}
                   </TD>
-                  <TD>
+                  <TD data-label="Status">
                     <Badge tone={r.status === "checked_in" ? "green" : "default"}>{r.status}</Badge>
                   </TD>
                   <TD>

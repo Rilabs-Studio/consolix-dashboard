@@ -39,13 +39,13 @@ export default async function GamePage({
             {games.length === 0 && <EmptyRow colSpan={6} />}
             {games.map((g) => (
               <TR key={g._id}>
-                <TD className="font-medium">{g.title}</TD>
-                <TD>{g.platform.join(", ")}</TD>
-                <TD>{g.genre.join(", ") || "—"}</TD>
-                <TD>
+                <TD data-label="Judul" className="font-medium">{g.title}</TD>
+                <TD data-label="Platform">{g.platform.join(", ")}</TD>
+                <TD data-label="Genre">{g.genre.join(", ") || "—"}</TD>
+                <TD data-label="Pemain">
                   {g.minPlayers}–{g.maxPlayers}
                 </TD>
-                <TD>{g.isPopular && <Badge tone="yellow">Populer</Badge>}</TD>
+                <TD data-label="Populer">{g.isPopular && <Badge tone="yellow">Populer</Badge>}</TD>
                 <TD>
                   <div className="flex items-center gap-1">
                     <Link
@@ -78,7 +78,7 @@ export default async function GamePage({
                 <Label>Genre</Label>
                 <ArrayInput name="genre" defaultValue={editing?.genre ?? []} placeholder="Sports, Fighting…" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <Label>Min pemain</Label>
                   <Input name="minPlayers" type="number" min={1} defaultValue={editing?.minPlayers ?? 1} />

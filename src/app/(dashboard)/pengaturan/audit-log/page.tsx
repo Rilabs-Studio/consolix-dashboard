@@ -23,19 +23,19 @@ export default async function AuditLogPage({
         title="Audit Log"
         description="Jejak aksi admin & kasir — field sensitif otomatis di-redact, retensi 365 hari."
       />
-      <form className="mb-4 flex items-end gap-2">
-        <div>
+      <form className="mb-4 flex flex-wrap items-end gap-2">
+        <div className="min-w-0 flex-1 sm:flex-none">
           <label className="mb-1 block text-xs font-medium text-slate-500">Entity</label>
           <input
             name="entity"
             defaultValue={entity ?? ""}
             placeholder="mis. cash_shift"
-            className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm"
+            className="h-10 w-full rounded-md border border-slate-300 bg-white px-2 text-base sm:h-9 sm:w-56 sm:text-sm"
           />
         </div>
         <button
           type="submit"
-          className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm hover:bg-slate-50"
+          className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm hover:bg-slate-50 sm:h-9"
         >
           Filter
         </button>

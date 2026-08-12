@@ -14,11 +14,12 @@ const buttonVariants = cva(
         ghost: "text-slate-700 hover:bg-slate-100",
         link: "text-emerald-600 underline-offset-4 hover:underline",
       },
+      // Lebih tinggi di HP agar nyaman disentuh, kembali padat dari `sm` ke atas.
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 px-3 text-xs",
-        lg: "h-10 px-6",
-        icon: "h-9 w-9",
+        default: "h-10 px-4 py-2 sm:h-9",
+        sm: "h-9 px-3 text-xs sm:h-8",
+        lg: "h-11 px-6 sm:h-10",
+        icon: "h-10 w-10 sm:h-9 sm:w-9",
       },
     },
     defaultVariants: { variant: "default", size: "default" },

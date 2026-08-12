@@ -32,7 +32,7 @@ export default async function MerchProdukPage() {
             {products.length === 0 && <EmptyRow colSpan={5} />}
             {products.map((p) => (
               <TR key={p.id}>
-                <TD>
+                <TD data-label="Produk">
                   <div className="flex items-center gap-2">
                     {p.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -52,9 +52,9 @@ export default async function MerchProdukPage() {
                     </div>
                   </div>
                 </TD>
-                <TD className="text-right">{formatRupiah(p.price)}</TD>
-                <TD className="text-right">{p.stock}</TD>
-                <TD>
+                <TD data-label="Harga" className="text-right">{formatRupiah(p.price)}</TD>
+                <TD data-label="Stok" className="text-right">{p.stock}</TD>
+                <TD data-label="Status">
                   {p.isActive ? <Badge tone="green">Aktif</Badge> : <Badge tone="red">Off</Badge>}
                 </TD>
                 <TD>

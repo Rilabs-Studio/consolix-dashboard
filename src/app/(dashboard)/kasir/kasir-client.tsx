@@ -217,7 +217,7 @@ export function KasirClient({
         </Card>
       ) : (
         <Card>
-          <CardContent className="flex items-center gap-4 py-3">
+          <CardContent className="flex flex-wrap items-center gap-3 py-3">
             <Badge tone="red">Shift belum dibuka</Badge>
             <span className="text-sm text-slate-500">
               Pembayaran tunai/QRIS butuh shift terbuka.
@@ -236,9 +236,9 @@ export function KasirClient({
             action={submit(checkInBooking)}
             className="flex flex-wrap items-end gap-2"
           >
-            <div>
+            <div className="min-w-0 flex-1 sm:flex-none">
               <Label>Check-in kode QR</Label>
-              <Input name="code" placeholder="AB12CD34" className="w-44 uppercase" required />
+              <Input name="code" placeholder="AB12CD34" className="uppercase sm:w-44" required />
             </div>
             <SubmitButton>Check-in</SubmitButton>
           </form>
@@ -263,7 +263,7 @@ export function KasirClient({
       {calls.map((c) => (
         <div
           key={c.at}
-          className="flex items-center justify-between rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800"
+          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800"
         >
           <span className="font-medium">
             🔔 Meja <b>{unitLabelForDevice(units, devices, c.deviceId)}</b> memanggil kasir!
@@ -406,7 +406,7 @@ export function KasirClient({
                 ))}
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label>Jam mulai</Label>
                 <Input type="datetime-local" name="startAt" required />
@@ -422,7 +422,7 @@ export function KasirClient({
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label>Metode bayar</Label>
                 <Select name="paymentMethod" defaultValue="cash">
@@ -435,7 +435,7 @@ export function KasirClient({
                 <Input type="number" name="amount" min={0} step={1000} placeholder="Ikuti tarif" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label>Nama pelanggan</Label>
                 <Input name="customerName" placeholder="Opsional" />

@@ -59,7 +59,7 @@ export default async function KeuanganPage({
             type="date"
             name="from"
             defaultValue={from}
-            className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm"
+            className="h-10 rounded-md border border-slate-300 bg-white px-2 text-base sm:h-9 sm:text-sm"
           />
         </div>
         <div>
@@ -68,13 +68,13 @@ export default async function KeuanganPage({
             type="date"
             name="to"
             defaultValue={to}
-            className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm"
+            className="h-10 rounded-md border border-slate-300 bg-white px-2 text-base sm:h-9 sm:text-sm"
           />
         </div>
         <Button type="submit" variant="outline">
           Terapkan
         </Button>
-        <div className="ml-auto flex gap-2">
+        <div className="flex gap-3 sm:ml-auto">
           <Link href="/keuangan/pengeluaran" className="text-sm text-emerald-600 hover:underline">
             Pengeluaran →
           </Link>
@@ -121,8 +121,8 @@ export default async function KeuanganPage({
                 {pnl.expenses.length === 0 && <EmptyRow colSpan={2} />}
                 {pnl.expenses.map((e) => (
                   <TR key={e.category}>
-                    <TD>{e.category}</TD>
-                    <TD className="text-right">{formatRupiah(e.total)}</TD>
+                    <TD data-label="Kategori">{e.category}</TD>
+                    <TD data-label="Total" className="text-right">{formatRupiah(e.total)}</TD>
                   </TR>
                 ))}
               </TBody>
@@ -148,10 +148,10 @@ export default async function KeuanganPage({
                 {occupancy.length === 0 && <EmptyRow colSpan={4} />}
                 {occupancy.map((u) => (
                   <TR key={u.unitId}>
-                    <TD className="font-medium">{u.unitCode}</TD>
-                    <TD className="text-right">{u.sessions}</TD>
-                    <TD className="text-right">{(u.usedMinutes / 60).toFixed(1)} jam</TD>
-                    <TD className="text-right">{u.occupancyPercent}%</TD>
+                    <TD data-label="Unit" className="font-medium">{u.unitCode}</TD>
+                    <TD data-label="Sesi" className="text-right">{u.sessions}</TD>
+                    <TD data-label="Jam Terpakai" className="text-right">{(u.usedMinutes / 60).toFixed(1)} jam</TD>
+                    <TD data-label="Okupansi" className="text-right">{u.occupancyPercent}%</TD>
                   </TR>
                 ))}
               </TBody>

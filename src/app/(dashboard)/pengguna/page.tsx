@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Table, THead, TBody, TR, TH, TD, EmptyRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import Link from "next/link";
 
 export default async function PenggunaPage({
@@ -27,13 +28,13 @@ export default async function PenggunaPage({
   return (
     <div>
       <PageHeader title="Pengguna" description="Pelanggan aplikasi Consolix." />
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <form className="flex gap-2">
-          <input
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <form className="flex min-w-0 flex-1 gap-2 sm:flex-none">
+          <Input
             name="q"
             defaultValue={q}
             placeholder="Cari nama / nomor…"
-            className="h-9 w-64 rounded-md border border-slate-300 bg-white px-3 text-sm"
+            className="min-w-0 flex-1 sm:w-64 sm:flex-none"
           />
           <Button type="submit" variant="outline" size="sm">
             Cari
@@ -59,12 +60,12 @@ export default async function PenggunaPage({
           {users.length === 0 && <EmptyRow colSpan={7} />}
           {users.map((u) => (
             <TR key={u.id}>
-              <TD className="font-medium">{u.name}</TD>
-              <TD>{u.phone ?? '—'}</TD>
-              <TD>{u.currentPoints}</TD>
-              <TD>Lv {u.level}</TD>
-              <TD>{formatDate(u.createdAt)}</TD>
-              <TD>
+              <TD data-label="Nama" className="font-medium">{u.name}</TD>
+              <TD data-label="Nomor">{u.phone ?? '—'}</TD>
+              <TD data-label="Poin">{u.currentPoints}</TD>
+              <TD data-label="Level">Lv {u.level}</TD>
+              <TD data-label="Terdaftar">{formatDate(u.createdAt)}</TD>
+              <TD data-label="Status">
                 {u.isActive ? <Badge tone="green">Aktif</Badge> : <Badge tone="red">Nonaktif</Badge>}
               </TD>
               {canToggle && (

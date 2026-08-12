@@ -41,7 +41,7 @@ export function RentalProductForm() {
             <Label>Deskripsi</Label>
             <Textarea name="description" rows={2} placeholder="Isi paket, kelengkapan…" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label>Jenis</Label>
               <Select name="kind" defaultValue="main">

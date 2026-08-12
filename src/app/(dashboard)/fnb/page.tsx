@@ -41,7 +41,7 @@ export default async function FnbPage({
   return (
     <div>
       <PageHeader title="FnB" description="Item menu, harga jual + HPP, dan stok." />
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex flex-wrap gap-2">
         <Link href="/fnb/kategori" className={buttonVariants({ variant: "outline", size: "sm" })}>
           Kategori
         </Link>
@@ -66,11 +66,11 @@ export default async function FnbPage({
             {items.length === 0 && <EmptyRow colSpan={7} />}
             {items.map((i) => (
               <TR key={i.id}>
-                <TD className="font-medium">{i.name}</TD>
-                <TD>{i.category?.name ?? "—"}</TD>
-                <TD>{formatRupiah(i.price)}</TD>
-                <TD className="text-slate-500">{formatRupiah(i.costPrice)}</TD>
-                <TD>
+                <TD data-label="Nama" className="font-medium">{i.name}</TD>
+                <TD data-label="Kategori">{i.category?.name ?? "—"}</TD>
+                <TD data-label="Harga">{formatRupiah(i.price)}</TD>
+                <TD data-label="HPP" className="text-slate-500">{formatRupiah(i.costPrice)}</TD>
+                <TD data-label="Stok">
                   <span className={i.stock <= 5 ? "font-semibold text-red-600" : ""}>{i.stock}</span>
                   {/* Quick stock-in inline */}
                   <form action={adjustFnbStock} className="mt-1 flex items-center gap-1">
@@ -80,7 +80,7 @@ export default async function FnbPage({
                     <SubmitButton variant="ghost" size="sm">+</SubmitButton>
                   </form>
                 </TD>
-                <TD>
+                <TD data-label="Status">
                   {i.isAvailable ? <Badge tone="green">Aktif</Badge> : <Badge tone="red">Off</Badge>}
                 </TD>
                 <TD>
@@ -114,7 +114,7 @@ export default async function FnbPage({
                   ))}
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <Label>Harga jual (Rp)</Label>
                   <Input name="price" type="number" min={0} required defaultValue={editing?.price} />

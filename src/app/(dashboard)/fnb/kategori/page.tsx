@@ -31,8 +31,8 @@ export default async function FnbKategoriPage() {
             {categories.length === 0 && <EmptyRow colSpan={3} />}
             {categories.map((c) => (
               <TR key={c.id}>
-                <TD className="font-medium">{c.name}</TD>
-                <TD>{c.sortOrder}</TD>
+                <TD data-label="Nama" className="font-medium">{c.name}</TD>
+                <TD data-label="Urutan">{c.sortOrder}</TD>
                 <TD>
                   <ConfirmDelete action={deleteFnbCategory} id={c.id} label={`Hapus kategori ${c.name}?`} />
                 </TD>

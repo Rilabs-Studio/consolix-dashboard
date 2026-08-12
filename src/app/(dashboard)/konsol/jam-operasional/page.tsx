@@ -51,9 +51,9 @@ export default async function JamOperasionalPage() {
               {holidays.length === 0 && <EmptyRow colSpan={4} label="Belum ada hari libur" />}
               {holidays.map((h) => (
                 <TR key={h.id}>
-                  <TD>{formatDate(h.date)}</TD>
-                  <TD className="font-medium">{h.name}</TD>
-                  <TD>
+                  <TD data-label="Tanggal">{formatDate(h.date)}</TD>
+                  <TD data-label="Nama" className="font-medium">{h.name}</TD>
+                  <TD data-label="Jenis">
                     <Badge tone={h.type === "closed" ? "red" : "yellow"}>{HOLIDAY_LABEL[h.type]}</Badge>
                     {h.type === "special_hours" && (
                       <span className="ml-2 text-xs text-slate-500">
@@ -72,7 +72,7 @@ export default async function JamOperasionalPage() {
             <CardContent className="pt-5">
               <p className="mb-3 font-medium text-slate-900">Tambah Hari Libur</p>
               <form action={createHoliday} className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <Label>Tanggal</Label>
                     <Input name="date" type="date" required />
@@ -90,7 +90,7 @@ export default async function JamOperasionalPage() {
                   <Label>Nama</Label>
                   <Input name="name" required placeholder="HUT RI" />
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid gap-3 sm:grid-cols-3">
                   <div>
                     <Label>Buka (jam khusus)</Label>
                     <Input name="openTime" type="time" />

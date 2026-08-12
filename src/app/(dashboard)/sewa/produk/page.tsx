@@ -41,7 +41,7 @@ export default async function SewaProdukPage() {
             {products.length === 0 && <EmptyRow colSpan={7} />}
             {products.map((p) => (
               <TR key={p.id}>
-                <TD>
+                <TD data-label="Produk">
                   <div className="flex items-center gap-2">
                     {p.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -61,16 +61,16 @@ export default async function SewaProdukPage() {
                     </div>
                   </div>
                 </TD>
-                <TD>
+                <TD data-label="Jenis">
                   <Badge tone={p.kind === "main" ? "blue" : "default"}>
                     {p.kind === "main" ? "Utama" : "Add-on"}
                   </Badge>
                   <p className="mt-0.5 text-xs text-slate-400">{CATEGORY_LABEL[p.category]}</p>
                 </TD>
-                <TD className="text-right">{formatRupiah(p.pricePerDay)}</TD>
-                <TD className="text-right text-xs">{formatRupiah(p.depositAmount)}</TD>
-                <TD className="text-right">{p.stock}</TD>
-                <TD>
+                <TD data-label="Harga/hari" className="text-right">{formatRupiah(p.pricePerDay)}</TD>
+                <TD data-label="Deposit" className="text-right text-xs">{formatRupiah(p.depositAmount)}</TD>
+                <TD data-label="Stok" className="text-right">{p.stock}</TD>
+                <TD data-label="Status">
                   {p.isActive ? <Badge tone="green">Aktif</Badge> : <Badge tone="red">Off</Badge>}
                 </TD>
                 <TD>

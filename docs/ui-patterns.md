@@ -27,6 +27,8 @@ src/server/actions/<modul>.ts
 | `SubmitButton ConfirmDelete` | `forms/form-controls.tsx` |
 | `ImagePreview` | `ui/image-preview.tsx` |
 | `RevenueChart` (Recharts, dipakai Overview & Keuangan) | `charts/revenue-chart.tsx` |
+| `NavList` (dipakai bersama Sidebar & MobileNav) + `getActiveHref` | `layout/nav-list.tsx`, `layout/nav.ts` |
+| `Sidebar` (desktop, `hidden md:flex`) / `MobileNav` (drawer, `md:hidden`) | `layout/sidebar.tsx`, `layout/mobile-nav.tsx` |
 
 ## Aturan
 
@@ -41,3 +43,35 @@ src/server/actions/<modul>.ts
 - Client component: hindari setState-di-effect (pakai adjust-during-render),
   hindari `useState(Date.now())` (impure — set di interval setelah mount).
 - Ikon dari `lucide-react`, warna aksen indigo/emerald mengikuti komponen yang ada.
+
+## Mobile-first (wajib)
+
+Dashboard dipakai kasir dari HP — `start_url` PWA-nya `/kasir`. Semua kelas dasar
+adalah tampilan HP; `sm:`/`md:`/`lg:` yang menambah kepadatan, bukan sebaliknya.
+`md` (768px) breakpoint struktural (sidebar muncul, tabel berhenti jadi kartu),
+`sm` (640px) breakpoint kepadatan (tinggi kontrol, ukuran font, `flex-col → flex-row`).
+Jangan pernah mendeteksi mobile lewat JS — tidak ada `useMediaQuery` di repo ini.
+
+- **Tabel.** `<Table>` default `layout="cards"`: di bawah `md` tiap baris jadi kartu
+  label↔nilai. **Setiap `<TD>` wajib punya `data-label` yang menyalin `<TH>`-nya**;
+  sel aksi sengaja dibiarkan tanpa label agar memakai lebar penuh. Pakai
+  `layout="scroll" stickyFirstColumn minWidth="…"` hanya untuk tabel yang gunanya
+  membandingkan antar baris (mis. rekap tutup kasir).
+- **Toolbar & filter** selalu `flex flex-wrap gap-2`. Strip tab panjang pakai
+  edge-bleed: `-mx-4 overflow-x-auto px-4 no-scrollbar sm:mx-0 sm:px-0` dengan pil
+  ber-`shrink-0 whitespace-nowrap`.
+- **Grid form** mulai dari satu kolom: `grid gap-3 sm:grid-cols-2`. Jangan tulis
+  `grid-cols-2`/`grid-cols-3` tanpa prefix.
+- **CTA** di header/footer form: `w-full sm:w-auto`.
+- **Input.** Selalu lewat primitif `Input`/`Select`/`Textarea` — ukurannya
+  `text-base sm:text-sm` karena font di bawah 16px membuat iOS Safari zoom saat
+  field difokuskan. `<input>`/`<select>` mentah harus meniru kelas itu.
+- **Modal** di-portal ke `body` dan tampil sebagai bottom sheet di HP. Karena itu
+  `<form>` harus berada **di dalam** Modal, bukan Modal di dalam `<form>`: field
+  yang pindah ke portal lepas dari form DOM dan hilang dari `FormData`. Butuh sheet
+  di tengah form (mis. keranjang POS)? Pakai panel `fixed` lokal, bukan `Modal`.
+- **Safe area.** Utility `pt-safe` / `pb-safe` / `px-safe` (definisinya di
+  `globals.css`) untuk elemen yang menempel tepi layar; aktif karena root layout
+  mengekspor `viewportFit: "cover"`.
+- Tinggi viewport pakai `dvh`, bukan `vh` — bar browser mobile membuat `100vh`
+  lebih tinggi dari area yang terlihat.

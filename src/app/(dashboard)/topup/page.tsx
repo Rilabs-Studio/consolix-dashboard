@@ -40,7 +40,7 @@ export default async function TopupPage({
   return (
     <div>
       <PageHeader title="Top Up Saldo" description="Verifikasi bukti transfer / QRIS + topup tunai." />
-      <div className="mb-4 flex gap-2 text-sm">
+      <div className="mb-4 flex flex-wrap gap-2 text-sm">
         {(["pending", "approved", "rejected"] as const).map((s) => (
           <a
             key={s}
@@ -70,11 +70,11 @@ export default async function TopupPage({
             {topups.length === 0 && <EmptyRow colSpan={7} />}
             {topups.map((t) => (
               <TR key={t.id}>
-                <TD>{formatDateTime(t.createdAt)}</TD>
-                <TD>{t.userName ?? "—"}</TD>
-                <TD className="font-medium">{formatRupiah(t.amount)}</TD>
-                <TD>{METHOD_LABEL[t.method]}</TD>
-                <TD>
+                <TD data-label="Waktu">{formatDateTime(t.createdAt)}</TD>
+                <TD data-label="Member">{t.userName ?? "—"}</TD>
+                <TD data-label="Nominal" className="font-medium">{formatRupiah(t.amount)}</TD>
+                <TD data-label="Metode">{METHOD_LABEL[t.method]}</TD>
+                <TD data-label="Bukti">
                   {t.proofUrl ? (
                     <a href={t.proofUrl} target="_blank" className="text-indigo-600 underline">
                       Lihat bukti
@@ -83,7 +83,7 @@ export default async function TopupPage({
                     "—"
                   )}
                 </TD>
-                <TD>
+                <TD data-label="Status">
                   <Badge tone={t.status === "approved" ? "green" : t.status === "rejected" ? "red" : "yellow"}>
                     {TOPUP_STATUS_LABEL[t.status]}
                   </Badge>

@@ -64,20 +64,20 @@ export default async function RatingPage({
           {rows.length === 0 && <EmptyRow colSpan={6} />}
           {rows.map((r) => (
             <TR key={r.id} className={r.isHidden ? "opacity-50" : undefined}>
-              <TD className="whitespace-nowrap">{formatDateTime(r.createdAt)}</TD>
-              <TD className="font-medium">{unitCode(r.consoleUnitId)}</TD>
-              <TD>
+              <TD data-label="Waktu" className="whitespace-nowrap">{formatDateTime(r.createdAt)}</TD>
+              <TD data-label="Unit" className="font-medium">{unitCode(r.consoleUnitId)}</TD>
+              <TD data-label="Rating">
                 <Badge tone={r.rating <= 2 ? "red" : r.rating === 3 ? "yellow" : "green"}>
                   ★ {r.rating}
                 </Badge>
               </TD>
-              <TD className="max-w-sm">
+              <TD data-label="Komentar" className="max-w-sm">
                 <p>{r.comment ?? "—"}</p>
                 {r.tags.length > 0 && (
                   <p className="mt-0.5 text-xs text-slate-400">{r.tags.join(" · ")}</p>
                 )}
               </TD>
-              <TD className="max-w-xs text-sm text-slate-600">{r.adminReply ?? "—"}</TD>
+              <TD data-label="Balasan" className="max-w-xs text-sm text-slate-600">{r.adminReply ?? "—"}</TD>
               <TD>
                 <RatingRowActions id={r.id} isHidden={r.isHidden} hasReply={!!r.adminReply} />
               </TD>

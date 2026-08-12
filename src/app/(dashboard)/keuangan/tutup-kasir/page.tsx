@@ -35,7 +35,9 @@ export default async function TutupKasirPage() {
           </CardContent>
         </Card>
       )}
-      <Table>
+      {/* Rekap shift dibaca dengan membandingkan antar baris (expected vs aktual
+          vs selisih), jadi tetap tabel yang menggeser — bukan kartu per baris. */}
+      <Table layout="scroll" stickyFirstColumn minWidth="64rem">
         <THead>
           <TR>
             <TH>Shift</TH>
@@ -53,18 +55,18 @@ export default async function TutupKasirPage() {
           {shifts.length === 0 && <EmptyRow colSpan={9} />}
           {shifts.map((s) => (
             <TR key={s.id}>
-              <TD className="font-medium">
+              <TD data-label="Shift" className="font-medium">
                 {s.code}{" "}
                 {s.status === "open" ? <Badge tone="green">Buka</Badge> : <Badge>Tutup</Badge>}
               </TD>
-              <TD>{formatDateTime(s.openedAt)}</TD>
-              <TD>{s.closedAt ? formatDateTime(s.closedAt) : "—"}</TD>
-              <TD>{formatRupiah(s.cashOpening)}</TD>
-              <TD>{formatRupiah(s.rentalSales)}</TD>
-              <TD>{formatRupiah(s.fnbSales)}</TD>
-              <TD>{formatRupiah(s.expectedCash)}</TD>
-              <TD>{formatRupiah(s.actualCash)}</TD>
-              <TD>
+              <TD data-label="Buka">{formatDateTime(s.openedAt)}</TD>
+              <TD data-label="Tutup">{s.closedAt ? formatDateTime(s.closedAt) : "—"}</TD>
+              <TD data-label="Kas Awal">{formatRupiah(s.cashOpening)}</TD>
+              <TD data-label="Rental">{formatRupiah(s.rentalSales)}</TD>
+              <TD data-label="FnB">{formatRupiah(s.fnbSales)}</TD>
+              <TD data-label="Expected">{formatRupiah(s.expectedCash)}</TD>
+              <TD data-label="Aktual">{formatRupiah(s.actualCash)}</TD>
+              <TD data-label="Selisih">
                 {s.difference == null ? (
                   "—"
                 ) : s.difference === 0 ? (

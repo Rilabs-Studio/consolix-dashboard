@@ -90,11 +90,11 @@ export default async function BookingPage({
                 {dayResult.items.length === 0 && <EmptyRow colSpan={9} />}
                 {dayResult.items.map((b) => (
                   <TR key={b.id}>
-                    <TD className="whitespace-nowrap">
+                    <TD data-label="Jam" className="whitespace-nowrap">
                       {formatTime(b.startAt)}–{formatTime(b.endAt)}
                     </TD>
-                    <TD className="font-medium">{b.code}</TD>
-                    <TD>
+                    <TD data-label="Kode" className="font-medium">{b.code}</TD>
+                    <TD data-label="Pelanggan">
                       <span className="flex items-center gap-1.5">
                         {b.userName ?? b.customerName ?? "—"}
                         {b.type === "walk_in" ? (
@@ -104,10 +104,10 @@ export default async function BookingPage({
                         )}
                       </span>
                     </TD>
-                    <TD>{unitLabel(b.consoleUnitId)}</TD>
-                    <TD>{b.durationMinutes}m</TD>
-                    <TD>{formatRupiah(b.totalAmount)}</TD>
-                    <TD>
+                    <TD data-label="Unit">{unitLabel(b.consoleUnitId)}</TD>
+                    <TD data-label="Durasi">{b.durationMinutes}m</TD>
+                    <TD data-label="Total">{formatRupiah(b.totalAmount)}</TD>
+                    <TD data-label="Bayar">
                       {PAYMENT_METHOD_LABEL[b.paymentMethod]}{" "}
                       {b.paymentStatus === "paid" ? (
                         <Badge tone="green">Lunas</Badge>
@@ -115,7 +115,7 @@ export default async function BookingPage({
                         <Badge tone="yellow">Belum</Badge>
                       )}
                     </TD>
-                    <TD>
+                    <TD data-label="Status">
                       <Badge tone={TONE[b.status] ?? "default"}>
                         {BOOKING_STATUS_LABEL[b.status]}
                       </Badge>
@@ -135,7 +135,7 @@ export default async function BookingPage({
               </TBody>
             </Table>
             {dayResult.meta && dayResult.meta.totalPages > 1 && (
-              <div className="mt-3 flex items-center gap-2 text-sm text-slate-500">
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
                 <span>
                   Hal {dayResult.meta.page}/{dayResult.meta.totalPages}
                 </span>

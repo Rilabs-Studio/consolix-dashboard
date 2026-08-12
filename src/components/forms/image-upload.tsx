@@ -79,7 +79,9 @@ export function ImageUploadInput({
   return (
     <div>
       <Label>{label}</Label>
-      <div className="flex items-start gap-3">
+      {/* Di HP thumbnail duduk di atas field: berdampingan hanya menyisakan
+          ±195px untuk kolom kanan, dan barisnya pasti overflow. */}
+      <div className="flex flex-col items-start gap-3 sm:flex-row">
         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-50">
           {url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -90,7 +92,7 @@ export function ImageUploadInput({
             </div>
           )}
         </div>
-        <div className="flex-1 space-y-2">
+        <div className="w-full min-w-0 flex-1 space-y-2">
           <Input
             name={name}
             type="url"
@@ -115,8 +117,10 @@ export function ImageUploadInput({
             >
               {busy ? "Mengunggah…" : "Unggah Foto"}
             </Button>
-            {error && <span className="text-xs text-red-500">{error}</span>}
           </div>
+          {/* Pesan error (mis. CORS) panjang — barisnya sendiri, bukan di
+              samping tombol. */}
+          {error && <p className="text-xs text-red-500">{error}</p>}
         </div>
       </div>
     </div>

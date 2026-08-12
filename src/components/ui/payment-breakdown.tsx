@@ -26,14 +26,14 @@ export function PaymentBreakdown({
       <CardContent>
         <dl className="space-y-2 text-sm">
           {rows.map((r) => (
-            <div key={r.label} className="flex items-center justify-between">
-              <dt className="text-slate-500">{r.label}</dt>
-              <dd className="text-slate-800">{formatRupiah(r.value)}</dd>
+            <div key={r.label} className="flex items-baseline justify-between gap-3">
+              <dt className="min-w-0 text-slate-500">{r.label}</dt>
+              <dd className="shrink-0 tabular-nums text-slate-800">{formatRupiah(r.value)}</dd>
             </div>
           ))}
-          <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-3 text-base font-semibold text-slate-900">
-            <dt>{totalLabel}</dt>
-            <dd>{formatRupiah(total)}</dd>
+          <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-slate-200 pt-3 text-base font-semibold text-slate-900">
+            <dt className="min-w-0">{totalLabel}</dt>
+            <dd className="shrink-0 tabular-nums">{formatRupiah(total)}</dd>
           </div>
         </dl>
       </CardContent>

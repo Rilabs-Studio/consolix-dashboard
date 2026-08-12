@@ -5,4 +5,118 @@ body {
   background: #f8fafc; /* slate-50 */
   color: #0f172a; /* slate-900 */
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  /* Cegah iOS Safari menggelembungkan teks saat rotasi ke landscape. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* ── Safe area (notch / home indicator) ──────────────────────────────────────
+   Baru bernilai ≠ 0 setelah root layout mengekspor viewportFit: "cover", jadi
+   aman dipakai di mana pun. */
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility px-safe {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+/* Scroller horizontal (strip tab) yang scrollbar-nya justru terlihat rusak. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── Tabel ───────────────────────────────────────────────────────────────────
+   Dua mode, dipilih lewat prop `layout` di <Table>. `--table-min-w` diset
+   inline dari komponen karena JIT Tailwind tidak bisa melihat nilai runtime. */
+
+@utility table-scroll-shell {
+  & > table {
+    min-width: var(--table-min-w, 0px);
+  }
+}
+
+/*
+ * Di bawah md tiap baris jadi kartu: header disembunyikan dan setiap sel
+ * mencetak labelnya sendiri dari `data-label`. Sel tanpa atribut itu tampil
+ * sebagai nilai polos (attr() menghasilkan ""), jadi migrasi bisa dicicil per
+ * halaman tanpa pernah memunculkan "undefined".
+ */
+@utility table-cards-shell {
+  @media (width >= 48rem) {
+    & > table {
+      min-width: var(--table-min-w, 0px);
+    }
+  }
+
+  @media (width < 48rem) {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    border-radius: 0;
+
+    & > table {
+      display: block;
+      min-width: 0;
+    }
+    & thead {
+      display: none;
+    }
+    & tbody {
+      display: block;
+      /* Garis pemisah milik baris tabel, bukan antar kartu. */
+      border-top-width: 0;
+    }
+
+    & tbody > tr {
+      display: block;
+      padding: 0.5rem 0.875rem;
+      border: 1px solid var(--color-slate-200);
+      border-radius: var(--radius-lg);
+      background: #fff;
+    }
+    & tbody > tr + tr {
+      margin-top: 0.5rem;
+    }
+
+    & td {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.375rem 0;
+      text-align: right;
+    }
+    & td::before {
+      content: attr(data-label);
+      flex: 0 0 auto;
+      text-align: left;
+      font-weight: 500;
+      color: var(--color-slate-500);
+    }
+
+    /* Sel aksi tidak berlabel — biarkan memakai lebar penuh. */
+    & td:not([data-label]),
+    & td[data-label=""] {
+      justify-content: flex-end;
+    }
+
+    /* Baris "belum ada data" adalah pesan, bukan pasangan label/nilai. */
+    & td[colspan] {
+      display: block;
+      text-align: center;
+    }
+    & td[colspan]::before {
+      content: none;
+    }
+  }
 }

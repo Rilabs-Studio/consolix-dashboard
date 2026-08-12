@@ -41,14 +41,14 @@ export default async function SewaPage({
         title="Sewa Rumahan"
         description="Sewa PS dibawa pulang — unit saja, add-on TV/stik, atau bundling."
       />
-      <div className="mb-4 flex items-end justify-between gap-2">
-        <form className="flex items-end gap-2">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+        <form className="flex flex-wrap items-end gap-2">
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-500">Status</label>
             <select
               name="status"
               defaultValue={status ?? ""}
-              className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm"
+              className="h-10 rounded-md border border-slate-300 bg-white px-2 text-base sm:h-9 sm:text-sm"
             >
               <option value="">Semua</option>
               {Object.entries(STATUS_LABEL).map(([value, label]) => (
@@ -60,7 +60,7 @@ export default async function SewaPage({
           </div>
           <button
             type="submit"
-            className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm hover:bg-slate-50"
+            className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm hover:bg-slate-50 sm:h-9"
           >
             Filter
           </button>
@@ -86,7 +86,7 @@ export default async function SewaPage({
           {orders.length === 0 && <EmptyRow colSpan={8} />}
           {orders.map((o) => (
             <TR key={o.id}>
-              <TD>
+              <TD data-label="Order">
                 <p className="font-mono text-sm font-medium">{o.code}</p>
                 <p className="text-xs text-slate-400">
                   {o.paymentStatus === "paid" ? (
@@ -98,7 +98,7 @@ export default async function SewaPage({
                   )}
                 </p>
               </TD>
-              <TD className="text-sm">
+              <TD data-label="Item" className="text-sm">
                 {o.items.map((i) => (
                   <p key={i.id}>
                     {i.qty > 1 ? `${i.qty}× ` : ""}
@@ -106,11 +106,11 @@ export default async function SewaPage({
                   </p>
                 ))}
               </TD>
-              <TD className="text-xs">
+              <TD data-label="Periode" className="text-xs">
                 {formatDate(o.startDate)} – {formatDate(o.endDate)}
                 <p className="text-slate-400">{o.durationDays} hari</p>
               </TD>
-              <TD className="max-w-[12rem] text-xs">
+              <TD data-label="Pengiriman" className="max-w-[12rem] text-xs">
                 {o.deliveryMethod === "pickup" ? (
                   "Ambil di outlet"
                 ) : (
@@ -122,9 +122,9 @@ export default async function SewaPage({
                   </>
                 )}
               </TD>
-              <TD className="text-right font-medium">{formatRupiah(o.totalAmount)}</TD>
-              <TD className="text-xs">{formatRupiah(o.depositAmount)}</TD>
-              <TD>
+              <TD data-label="Total" className="text-right font-medium">{formatRupiah(o.totalAmount)}</TD>
+              <TD data-label="Deposit" className="text-xs">{formatRupiah(o.depositAmount)}</TD>
+              <TD data-label="Status">
                 <Badge tone={STATUS_TONE[o.status] ?? "default"}>
                   {STATUS_LABEL[o.status] ?? o.status}
                 </Badge>

@@ -48,13 +48,13 @@ export function AuditTable({ logs }: { logs: AuditLog[] }) {
           {logs.length === 0 && <EmptyRow colSpan={6} />}
           {logs.map((log) => (
             <TR key={log.id}>
-              <TD className="whitespace-nowrap">{formatDateTime(log.createdAt)}</TD>
-              <TD>{log.adminEmail || "sistem"}</TD>
-              <TD>
+              <TD data-label="Waktu" className="whitespace-nowrap">{formatDateTime(log.createdAt)}</TD>
+              <TD data-label="Admin">{log.adminEmail || "sistem"}</TD>
+              <TD data-label="Aksi">
                 <Badge tone={ACTION_TONE[log.action] ?? "default"}>{log.action}</Badge>
               </TD>
-              <TD>{log.entity}</TD>
-              <TD className="max-w-[10rem] truncate font-mono text-xs">{log.entityId ?? "—"}</TD>
+              <TD data-label="Entity">{log.entity}</TD>
+              <TD data-label="Ref" className="max-w-[10rem] truncate font-mono text-xs">{log.entityId ?? "—"}</TD>
               <TD>
                 {(log.before || log.after) && (
                   <Button variant="ghost" size="sm" onClick={() => setSelected(log)}>

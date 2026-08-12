@@ -56,11 +56,11 @@ export default async function PointShopPage() {
               {items.length === 0 && <EmptyRow colSpan={6} />}
               {items.map((i) => (
                 <TR key={i.id}>
-                  <TD className="font-medium">{i.name}</TD>
-                  <TD>{i.pointsCost}</TD>
-                  <TD>{i.stock ?? "∞"}</TD>
-                  <TD>{i.perUserLimit ?? "∞"}</TD>
-                  <TD>{i.isActive ? <Badge tone="green">Aktif</Badge> : <Badge tone="red">Off</Badge>}</TD>
+                  <TD data-label="Item" className="font-medium">{i.name}</TD>
+                  <TD data-label="Harga Poin">{i.pointsCost}</TD>
+                  <TD data-label="Stok">{i.stock ?? "∞"}</TD>
+                  <TD data-label="Limit/User">{i.perUserLimit ?? "∞"}</TD>
+                  <TD data-label="Status">{i.isActive ? <Badge tone="green">Aktif</Badge> : <Badge tone="red">Off</Badge>}</TD>
                   <TD>
                     <ConfirmDelete action={deletePointShopItem} id={i.id} label={`Hapus ${i.name}?`} />
                   </TD>
@@ -82,9 +82,9 @@ export default async function PointShopPage() {
                 {redemptions.length === 0 && <EmptyRow colSpan={3} label="Belum ada penukaran" />}
                 {redemptions.slice(0, 15).map((r) => (
                   <TR key={r.id}>
-                    <TD>{formatDateTime(r.createdAt)}</TD>
-                    <TD>-{r.pointsSpent}</TD>
-                    <TD>{r.resultType}</TD>
+                    <TD data-label="Waktu">{formatDateTime(r.createdAt)}</TD>
+                    <TD data-label="Poin">-{r.pointsSpent}</TD>
+                    <TD data-label="Hasil">{r.resultType}</TD>
                   </TR>
                 ))}
               </TBody>
@@ -117,7 +117,7 @@ export default async function PointShopPage() {
                   ))}
                 </Select>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid gap-3 sm:grid-cols-3">
                 <div>
                   <Label>Harga poin</Label>
                   <Input name="pointsCost" type="number" min={1} required />

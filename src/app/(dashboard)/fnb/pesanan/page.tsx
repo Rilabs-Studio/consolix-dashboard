@@ -53,10 +53,12 @@ export default async function PesananFnbPage({
   return (
     <div>
       <PageHeader title="Pesanan FnB" description="Antrean dapur + pembayaran pickup." />
-      <div className="mb-4 flex gap-2 text-sm">
+      {/* Strip status membentang ke tepi layar di HP supaya menggeser, bukan
+          membungkus jadi tiga baris. */}
+      <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 text-sm no-scrollbar sm:mx-0 sm:flex-wrap sm:px-0">
         <a
           href="/fnb/pesanan"
-          className={`rounded-full px-3 py-1 ${!status ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600"}`}
+          className={`shrink-0 rounded-full px-3 py-1.5 whitespace-nowrap sm:py-1 ${!status ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600"}`}
         >
           Semua
         </a>
@@ -64,7 +66,7 @@ export default async function PesananFnbPage({
           <a
             key={s}
             href={`/fnb/pesanan?status=${s}`}
-            className={`rounded-full px-3 py-1 ${status === s ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600"}`}
+            className={`shrink-0 rounded-full px-3 py-1.5 whitespace-nowrap sm:py-1 ${status === s ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600"}`}
           >
             {FNB_ORDER_STATUS_LABEL[s]}
           </a>
@@ -86,7 +88,7 @@ export default async function PesananFnbPage({
           {orders.length === 0 && <EmptyRow colSpan={7} />}
           {orders.map((o) => (
             <TR key={o.id}>
-              <TD className="font-medium">
+              <TD data-label="Kode" className="font-medium">
                 {o.code}
                 {o.customerName && (
                   <p className="text-xs text-slate-400">
@@ -95,12 +97,12 @@ export default async function PesananFnbPage({
                   </p>
                 )}
               </TD>
-              <TD>{formatDateTime(o.createdAt)}</TD>
-              <TD className="text-sm">
+              <TD data-label="Waktu">{formatDateTime(o.createdAt)}</TD>
+              <TD data-label="Item" className="text-sm">
                 {o.items?.map((i) => `${i.name}×${i.qty}`).join(", ")}
               </TD>
-              <TD>{formatRupiah(o.totalAmount)}</TD>
-              <TD>
+              <TD data-label="Total">{formatRupiah(o.totalAmount)}</TD>
+              <TD data-label="Bayar">
                 {o.bookingId ? (
                   <Badge tone="blue">Tagihan sesi</Badge>
                 ) : (
@@ -115,7 +117,7 @@ export default async function PesananFnbPage({
                   </>
                 )}
               </TD>
-              <TD>
+              <TD data-label="Status">
                 <Badge tone={TONE[o.status]}>{FNB_ORDER_STATUS_LABEL[o.status]}</Badge>
               </TD>
               <TD>

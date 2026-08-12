@@ -56,15 +56,15 @@ export default async function VoucherPage() {
               {templates.length === 0 && <EmptyRow colSpan={4} />}
               {templates.map((t) => (
                 <TR key={t.id}>
-                  <TD className="font-medium">{t.name}</TD>
-                  <TD className="text-sm">
+                  <TD data-label="Template" className="font-medium">{t.name}</TD>
+                  <TD data-label="Diskon" className="text-sm">
                     {t.discountType === "PERCENT"
                       ? `${t.discountValue}%${t.maxDiscount ? ` (maks ${formatRupiah(t.maxDiscount)})` : ""}`
                       : t.discountType === "FIXED"
                         ? formatRupiah(t.discountValue)
                         : `${t.discountValue} menit`}
                   </TD>
-                  <TD>{t.validDays} hari</TD>
+                  <TD data-label="Masa Berlaku">{t.validDays} hari</TD>
                   <TD>
                     <ConfirmDelete action={deleteVoucherTemplate} id={t.id} label={`Hapus ${t.name}?`} />
                   </TD>
@@ -80,7 +80,7 @@ export default async function VoucherPage() {
                   <Label>Nama</Label>
                   <Input name="name" required />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <Label>Tipe</Label>
                     <Select name="discountType" defaultValue="PERCENT">
@@ -120,16 +120,16 @@ export default async function VoucherPage() {
             {issued.length === 0 && <EmptyRow colSpan={4} label="Belum ada voucher terbit" />}
             {issued.map((v) => (
               <TR key={v.id}>
-                <TD className="font-mono font-medium">{v.code}</TD>
-                <TD>{v.name}</TD>
-                <TD>
+                <TD data-label="Kode" className="font-mono font-medium">{v.code}</TD>
+                <TD data-label="Voucher">{v.name}</TD>
+                <TD data-label="Status">
                   <Badge
                     tone={v.status === "active" ? "green" : v.status === "used" ? "blue" : "red"}
                   >
                     {v.status}
                   </Badge>
                 </TD>
-                <TD>{formatDate(v.expiresAt)}</TD>
+                <TD data-label="Kadaluarsa">{formatDate(v.expiresAt)}</TD>
               </TR>
             ))}
           </TBody>

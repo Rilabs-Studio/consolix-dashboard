@@ -42,7 +42,7 @@ export function ArrayInput({
             }
           }}
         />
-        <Button type="button" variant="secondary" size="icon" onClick={add}>
+        <Button type="button" variant="secondary" size="icon" className="shrink-0" onClick={add}>
           <Plus className="h-4 w-4" />
         </Button>
       </div>
@@ -50,13 +50,16 @@ export function ArrayInput({
         {items.map((item, i) => (
           <span
             key={`${item}-${i}`}
-            className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700"
+            className="inline-flex max-w-full items-center gap-1 rounded-full bg-slate-100 py-1 pr-1 pl-2.5 text-xs text-slate-700"
           >
-            {item}
+            <span className="truncate">{item}</span>
+            {/* Ikon telanjang h-3 w-3 praktis tidak bisa disentuh — beri padding
+                supaya area tapnya layak di HP. */}
             <button
               type="button"
+              aria-label={`Hapus ${item}`}
               onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}
-              className="text-slate-400 hover:text-red-600"
+              className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200 hover:text-red-600"
             >
               <X className="h-3 w-3" />
             </button>

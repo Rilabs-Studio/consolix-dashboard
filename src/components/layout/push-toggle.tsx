@@ -108,7 +108,7 @@ export function PushToggle() {
       title={title}
       disabled={state === "busy" || state === "denied"}
       className={cn(
-        "rounded-md p-2 transition-colors",
+        "inline-flex h-11 w-11 items-center justify-center rounded-md transition-colors sm:h-9 sm:w-9",
         state === "on" ? "text-indigo-600 hover:bg-indigo-50" : "text-slate-400 hover:bg-slate-100",
         state === "denied" && "cursor-not-allowed opacity-50"
       )}

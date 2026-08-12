@@ -58,3 +58,20 @@ export const NAV: NavItem[] = [
   { label: "Pengguna", href: "/pengguna", icon: Users, group: "Pengelolaan", minRole: "OPERATOR" },
   { label: "Audit Log", href: "/pengaturan/audit-log", icon: ScrollText, group: "Pengelolaan", minRole: "ADMIN" },
 ];
+
+/**
+ * Longest-prefix match: hanya href paling spesifik yang dianggap aktif, supaya
+ * `/fnb` tidak ikut menyala saat berada di `/fnb/pesanan`. Dipakai bersama oleh
+ * Sidebar (desktop) dan MobileNav (drawer) agar keduanya tidak pernah berbeda.
+ */
+export function getActiveHref(pathname: string, items: NavItem[] = NAV): string | null {
+  return items.reduce<string | null>((best, item) => {
+    const matches =
+      item.href === "/"
+        ? pathname === "/"
+        : pathname === item.href || pathname.startsWith(item.href + "/");
+    if (!matches) return best;
+    if (best === null || item.href.length > best.length) return item.href;
+    return best;
+  }, null);
+}

@@ -8,10 +8,20 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: { capable: true, title: "Consolix", statusBarStyle: "default" },
   icons: { icon: "/icons/icon-192.png", apple: "/icons/icon-192.png" },
+  // Kode booking (AB12CD34) & nominal rupiah di tabel jangan diubah iOS jadi
+  // tautan telepon.
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Layout boleh menyentuh area notch; utility `*-safe` di globals.css yang
+  // menjaga konten tetap terbaca. Tanpa ini semua env(safe-area-inset-*) = 0.
+  viewportFit: "cover",
   themeColor: "#4f46e5",
+  // Sengaja tanpa maximumScale/userScalable — pinch-zoom masih dibutuhkan di
+  // tabel padat.
 };
 
 export default function RootLayout({

@@ -45,12 +45,12 @@ export default async function PengeluaranPage({
           {expenses.length === 0 && <EmptyRow colSpan={7} />}
           {expenses.map((e) => (
             <TR key={e.id}>
-              <TD>{formatDate(e.date)}</TD>
-              <TD>{categoryName(e.expenseCategoryId)}</TD>
-              <TD>{e.description}</TD>
-              <TD>{e.paymentMethod === "cash" ? "Tunai" : "Transfer"}</TD>
-              <TD className="text-right font-medium">{formatRupiah(e.amount)}</TD>
-              <TD>
+              <TD data-label="Tanggal">{formatDate(e.date)}</TD>
+              <TD data-label="Kategori">{categoryName(e.expenseCategoryId)}</TD>
+              <TD data-label="Deskripsi">{e.description}</TD>
+              <TD data-label="Metode">{e.paymentMethod === "cash" ? "Tunai" : "Transfer"}</TD>
+              <TD data-label="Jumlah" className="text-right font-medium">{formatRupiah(e.amount)}</TD>
+              <TD data-label="Shift">
                 {e.cashShiftId ? <Badge tone="blue">Ter-stamp shift</Badge> : <Badge>—</Badge>}
               </TD>
               <TD>

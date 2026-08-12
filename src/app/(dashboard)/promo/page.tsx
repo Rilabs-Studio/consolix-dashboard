@@ -49,7 +49,7 @@ export default async function PromoPage() {
             {promos.length === 0 && <EmptyRow colSpan={6} />}
             {promos.map((p) => (
               <TR key={p.id}>
-                <TD>
+                <TD data-label="Kode">
                   <div className="flex items-center gap-2">
                     {p.bannerUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -67,18 +67,18 @@ export default async function PromoPage() {
                     </div>
                   </div>
                 </TD>
-                <TD className="text-sm">
+                <TD data-label="Diskon" className="text-sm">
                   {p.discountType === "PERCENT"
                     ? `${p.discountValue}%${p.maxDiscount ? ` (maks ${formatRupiah(p.maxDiscount)})` : ""}`
                     : p.discountType === "FIXED"
                       ? formatRupiah(p.discountValue)
                       : `${p.discountValue} menit gratis`}
                 </TD>
-                <TD>
+                <TD data-label="Kuota">
                   {p.usedCount}/{p.quota ?? "∞"}
                 </TD>
-                <TD className="text-xs">{formatDateTime(p.endAt)}</TD>
-                <TD>{p.isActive ? <Badge tone="green">Aktif</Badge> : <Badge tone="red">Off</Badge>}</TD>
+                <TD data-label="Periode" className="text-xs">{formatDateTime(p.endAt)}</TD>
+                <TD data-label="Status">{p.isActive ? <Badge tone="green">Aktif</Badge> : <Badge tone="red">Off</Badge>}</TD>
                 <TD>
                   <ConfirmDelete action={deletePromo} id={p.id} label={`Hapus promo ${p.code}?`} />
                 </TD>
@@ -90,7 +90,7 @@ export default async function PromoPage() {
           <CardContent className="pt-5">
             <p className="mb-3 font-medium text-slate-900">Tambah Promo</p>
             <form action={savePromo} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <Label>Kode</Label>
                   <Input name="code" required placeholder="HEMAT10" className="uppercase" />

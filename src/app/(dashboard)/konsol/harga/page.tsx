@@ -42,14 +42,14 @@ export default async function HargaPage() {
             {rules.length === 0 && <EmptyRow colSpan={7} />}
             {rules.map((r) => (
               <TR key={r.id}>
-                <TD className="font-medium">{r.label}</TD>
-                <TD>{typeName(r.consoleTypeId)}</TD>
-                <TD>{DAY_LABEL[r.dayType]}</TD>
-                <TD>
+                <TD data-label="Label" className="font-medium">{r.label}</TD>
+                <TD data-label="Tipe">{typeName(r.consoleTypeId)}</TD>
+                <TD data-label="Hari">{DAY_LABEL[r.dayType]}</TD>
+                <TD data-label="Jam">
                   {r.startTime.slice(0, 5)}–{r.endTime.slice(0, 5)}
                 </TD>
-                <TD>{formatRupiah(r.pricePerHour)}</TD>
-                <TD>{r.isActive ? <Badge tone="green">Aktif</Badge> : <Badge tone="red">Nonaktif</Badge>}</TD>
+                <TD data-label="Harga/Jam">{formatRupiah(r.pricePerHour)}</TD>
+                <TD data-label="Status">{r.isActive ? <Badge tone="green">Aktif</Badge> : <Badge tone="red">Nonaktif</Badge>}</TD>
                 <TD>
                   <div className="flex items-center gap-1">
                     <form action={togglePriceRule}>
@@ -93,7 +93,7 @@ export default async function HargaPage() {
                   <option value="holiday">Hari libur</option>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <Label>Mulai</Label>
                   <Input name="startTime" type="time" required defaultValue="10:00" />
@@ -103,7 +103,7 @@ export default async function HargaPage() {
                   <Input name="endTime" type="time" required defaultValue="17:00" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <Label>Harga / jam (Rp)</Label>
                   <Input name="pricePerHour" type="number" min={1000} required />

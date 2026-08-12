@@ -39,10 +39,10 @@ export default async function TipeKonsolPage({
             {types.length === 0 && <EmptyRow colSpan={5} />}
             {types.map((t) => (
               <TR key={t.id}>
-                <TD className="font-medium">{t.name}</TD>
-                <TD>{formatRupiah(t.basePricePerHour)}</TD>
-                <TD>{t.sortOrder}</TD>
-                <TD>{t.isActive ? <Badge tone="green">Aktif</Badge> : <Badge tone="red">Nonaktif</Badge>}</TD>
+                <TD data-label="Nama" className="font-medium">{t.name}</TD>
+                <TD data-label="Harga Dasar/Jam">{formatRupiah(t.basePricePerHour)}</TD>
+                <TD data-label="Urutan">{t.sortOrder}</TD>
+                <TD data-label="Status">{t.isActive ? <Badge tone="green">Aktif</Badge> : <Badge tone="red">Nonaktif</Badge>}</TD>
                 <TD>
                   <div className="flex items-center gap-1">
                     <Link

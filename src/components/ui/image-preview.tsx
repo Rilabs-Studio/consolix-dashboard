@@ -24,7 +24,7 @@ export function ImagePreview({ url, label = "Bukti transfer" }: { url?: string |
       </button>
       <Modal open={open} onClose={() => setOpen(false)} title={label}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={url} alt={label} className="mx-auto max-h-[70vh] w-auto rounded-md" />
+        <img src={url} alt={label} className="mx-auto max-h-[70dvh] w-auto max-w-full rounded-md" />
       </Modal>
     </>
   );

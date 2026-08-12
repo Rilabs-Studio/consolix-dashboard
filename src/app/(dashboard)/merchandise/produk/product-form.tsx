@@ -41,7 +41,7 @@ export function MerchProductForm() {
             <Label>Deskripsi</Label>
             <Textarea name="description" rows={2} placeholder="Bahan, ukuran, isi paket…" />
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid gap-3 sm:grid-cols-3">
             <div>
               <Label>Harga (Rp)</Label>
               <Input name="price" type="number" min={1000} required />

@@ -58,15 +58,15 @@ export default async function ChallengePage() {
             {challenges.length === 0 && <EmptyRow colSpan={7} />}
             {challenges.map((c) => (
               <TR key={c.id}>
-                <TD className="font-medium">{c.title}</TD>
-                <TD>{TYPE_LABEL[c.type] ?? c.type}</TD>
-                <TD>{c.targetValue}</TD>
-                <TD className="text-sm">
+                <TD data-label="Judul" className="font-medium">{c.title}</TD>
+                <TD data-label="Tipe">{TYPE_LABEL[c.type] ?? c.type}</TD>
+                <TD data-label="Target">{c.targetValue}</TD>
+                <TD data-label="Periode" className="text-sm">
                   {c.period}
                   <p className="text-xs text-slate-400">s/d {formatDateTime(c.endAt)}</p>
                 </TD>
-                <TD>{c.rewardPoints} poin</TD>
-                <TD>{c.isActive ? <Badge tone="green">Aktif</Badge> : <Badge tone="red">Off</Badge>}</TD>
+                <TD data-label="Reward">{c.rewardPoints} poin</TD>
+                <TD data-label="Status">{c.isActive ? <Badge tone="green">Aktif</Badge> : <Badge tone="red">Off</Badge>}</TD>
                 <TD>
                   <ConfirmDelete action={deleteChallenge} id={c.id} label={`Hapus ${c.title}?`} />
                 </TD>
@@ -86,7 +86,7 @@ export default async function ChallengePage() {
                 <Label>Deskripsi</Label>
                 <Textarea name="description" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <Label>Tipe</Label>
                   <Select name="type" defaultValue="play_hours">

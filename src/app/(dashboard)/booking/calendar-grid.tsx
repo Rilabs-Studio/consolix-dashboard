@@ -36,20 +36,22 @@ export function CalendarGrid({
   const statusesInMonth = [...new Set(days.flatMap((d) => Object.keys(d.byStatus)))];
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
-      <div className="mb-3 flex items-center justify-between">
+    <div className="rounded-lg border border-slate-200 bg-white p-3 sm:p-4">
+      <div className="mb-3 flex items-center justify-between gap-2">
         <Link
           href={`/booking?month=${prevMonth}`}
-          className={buttonVariants({ variant: "outline", size: "sm" })}
+          aria-label="Bulan sebelumnya"
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "px-2 sm:px-3")}
         >
-          ‹ Sebelumnya
+          ‹<span className="hidden sm:ml-1 sm:inline">Sebelumnya</span>
         </Link>
-        <p className="text-sm font-semibold text-slate-900">{monthLabel}</p>
+        <p className="min-w-0 truncate text-sm font-semibold text-slate-900">{monthLabel}</p>
         <Link
           href={`/booking?month=${nextMonth}`}
-          className={buttonVariants({ variant: "outline", size: "sm" })}
+          aria-label="Bulan berikutnya"
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "px-2 sm:px-3")}
         >
-          Berikutnya ›
+          <span className="hidden sm:mr-1 sm:inline">Berikutnya</span>›
         </Link>
       </div>
 
@@ -60,7 +62,8 @@ export function CalendarGrid({
           </div>
         ))}
         {cells.map((cell, i) => {
-          if (!cell) return <div key={`pad-${i}`} className="min-h-20 rounded-md bg-slate-50" />;
+          if (!cell)
+            return <div key={`pad-${i}`} className="min-h-14 rounded-md bg-slate-50 sm:min-h-20" />;
           const day = byDate.get(cell);
           const dayNum = Number(cell.slice(8));
           return (
@@ -68,8 +71,10 @@ export function CalendarGrid({
               key={cell}
               href={`/booking?month=${month}&date=${cell}`}
               className={cn(
-                "min-h-20 rounded-md border border-transparent p-1.5 text-left transition hover:border-indigo-200 hover:bg-indigo-50/60",
-                cell === today && "ring-1 ring-inset ring-indigo-400",
+                // Sel ±42px di HP: konten dipadatkan, bukan grid-nya yang diubah —
+                // kalender harus tetap terbaca sebagai satu bulan penuh.
+                "flex min-h-14 flex-col items-center gap-1 rounded-md border border-transparent p-1 transition hover:border-indigo-200 hover:bg-indigo-50/60 sm:min-h-20 sm:items-start sm:p-1.5 sm:text-left",
+                cell === today && "ring-1 ring-indigo-400 ring-inset",
                 cell === selectedDate && "border-indigo-300 bg-indigo-50"
               )}
             >
@@ -82,11 +87,14 @@ export function CalendarGrid({
                 {dayNum}
               </span>
               {day && (
-                <div className="mt-1 space-y-1">
-                  <span className="inline-block rounded-full bg-indigo-100 px-1.5 py-0.5 text-[11px] font-semibold text-indigo-700">
-                    {day.total} booking
+                <div className="flex flex-col items-center gap-1 sm:mt-1 sm:items-start sm:space-y-1">
+                  {/* Pil "N booking" lebih lebar dari selnya di HP — di sana
+                      cukup angkanya saja. */}
+                  <span className="inline-block rounded-full bg-indigo-100 px-1.5 py-0.5 text-[11px] leading-none font-semibold text-indigo-700 sm:leading-normal">
+                    {day.total}
+                    <span className="hidden sm:inline"> booking</span>
                   </span>
-                  <span className="flex flex-wrap gap-0.5">
+                  <span className="flex flex-wrap justify-center gap-0.5 sm:justify-start">
                     {Object.keys(day.byStatus)
                       .slice(0, 3)
                       .map((s) => (

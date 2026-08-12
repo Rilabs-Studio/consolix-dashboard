@@ -59,10 +59,10 @@ export default async function GamifikasiPage() {
               {levels.length === 0 && <EmptyRow colSpan={4} />}
               {levels.map((l) => (
                 <TR key={l.level}>
-                  <TD className="font-medium">Lv {l.level}</TD>
-                  <TD>{l.name}</TD>
-                  <TD>{l.minXp}</TD>
-                  <TD>{l.rewardPoints}</TD>
+                  <TD data-label="Level" className="font-medium">Lv {l.level}</TD>
+                  <TD data-label="Nama">{l.name}</TD>
+                  <TD data-label="Min XP">{l.minXp}</TD>
+                  <TD data-label="Bonus Poin">{l.rewardPoints}</TD>
                 </TR>
               ))}
             </TBody>
@@ -76,7 +76,7 @@ export default async function GamifikasiPage() {
                   <Label>User ID</Label>
                   <Input name="userId" required placeholder="uuid user (lihat /pengguna)" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <Label>Poin (±)</Label>
                     <Input name="points" type="number" required />
@@ -104,11 +104,11 @@ export default async function GamifikasiPage() {
               {badges.length === 0 && <EmptyRow colSpan={3} />}
               {badges.map((b) => (
                 <TR key={b.id}>
-                  <TD>
+                  <TD data-label="Badge">
                     <p className="font-medium">{b.name}</p>
                     <p className="text-xs text-slate-400">{b.description}</p>
                   </TD>
-                  <TD className="text-sm">
+                  <TD data-label="Kriteria" className="text-sm">
                     {CRITERIA.find(([k]) => k === b.criteriaType)?.[1] ?? b.criteriaType} ≥ {b.criteriaValue}
                   </TD>
                   <TD>
@@ -122,7 +122,7 @@ export default async function GamifikasiPage() {
             <CardContent className="pt-5">
               <p className="mb-3 font-medium text-slate-900">Tambah Badge</p>
               <form action={saveBadge} className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <Label>Kode</Label>
                     <Input name="code" required placeholder="NIGHT_OWL" />
@@ -136,7 +136,7 @@ export default async function GamifikasiPage() {
                   <Label>Deskripsi</Label>
                   <Input name="description" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <Label>Kriteria</Label>
                     <Select name="criteriaType" defaultValue="total_bookings">

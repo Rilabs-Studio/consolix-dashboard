@@ -55,20 +55,20 @@ export default async function NotifikasiPage() {
           {broadcasts.length === 0 && <EmptyRow colSpan={8} />}
           {broadcasts.map((b) => (
             <TR key={b.id}>
-              <TD>
+              <TD data-label="Judul">
                 <p className="font-medium text-slate-900">{b.title}</p>
                 <p className="max-w-xs truncate text-xs text-slate-500">{b.body}</p>
               </TD>
-              <TD>{b.audienceType === "all" ? "Semua user" : b.audienceType}</TD>
-              <TD>
+              <TD data-label="Audiens">{b.audienceType === "all" ? "Semua user" : b.audienceType}</TD>
+              <TD data-label="Status">
                 <Badge tone={STATUS_TONE[b.status] ?? "default"}>
                   {STATUS_LABEL[b.status] ?? b.status}
                 </Badge>
               </TD>
-              <TD className="text-right">{b.totalTargets}</TD>
-              <TD className="text-right">{b.sentCount}</TD>
-              <TD className="text-right">{b.failedCount}</TD>
-              <TD className="text-xs">
+              <TD data-label="Target" className="text-right">{b.totalTargets}</TD>
+              <TD data-label="Terkirim" className="text-right">{b.sentCount}</TD>
+              <TD data-label="Gagal" className="text-right">{b.failedCount}</TD>
+              <TD data-label="Waktu" className="text-xs">
                 {b.status === "scheduled"
                   ? `Jadwal: ${formatDateTime(b.scheduledAt)}`
                   : formatDateTime(b.sentAt ?? b.createdAt)}

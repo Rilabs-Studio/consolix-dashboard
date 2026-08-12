@@ -61,16 +61,16 @@ export function PerangkatClient({ initialDevices }: { initialDevices: TvDevice[]
           {devices.length === 0 && <EmptyRow colSpan={6} label="Belum ada perangkat" />}
           {devices.map((d) => (
             <TR key={d.id}>
-              <TD className="font-mono">{d.id}</TD>
-              <TD>{d.name}</TD>
-              <TD>
+              <TD data-label="ID" className="font-mono">{d.id}</TD>
+              <TD data-label="Nama">{d.name}</TD>
+              <TD data-label="Status">
                 <Badge tone={d.online ? "green" : "default"}>
                   {d.online ? "Online" : "Offline"}
                 </Badge>
               </TD>
-              <TD>{d.version || "—"}</TD>
-              <TD>{d.session ? <Badge tone="blue">Berjalan</Badge> : "—"}</TD>
-              <TD className="text-right">
+              <TD data-label="Versi App">{d.version || "—"}</TD>
+              <TD data-label="Sesi Aktif">{d.session ? <Badge tone="blue">Berjalan</Badge> : "—"}</TD>
+              <TD data-label="Aksi" className="text-right">
                 <Button size="sm" variant="ghost" onClick={() => setDialog({ kind: "rename", device: d })}>
                   Ubah Nama
                 </Button>

@@ -42,16 +42,16 @@ export default async function TierPage() {
             {tiers.length === 0 && <EmptyRow colSpan={6} />}
             {tiers.map((t) => (
               <TR key={t.id}>
-                <TD>
+                <TD data-label="Tier">
                   <span className="inline-flex items-center gap-2 font-medium">
                     <span className="h-3 w-3 rounded-full" style={{ backgroundColor: t.color }} />
                     {t.name}
                   </span>
                 </TD>
-                <TD>{t.minLifetimePoints}</TD>
-                <TD>{t.discountPercent}%</TD>
-                <TD>×{t.pointMultiplier}</TD>
-                <TD>{t.freeMinutesPerMonth}m</TD>
+                <TD data-label="Min Poin">{t.minLifetimePoints}</TD>
+                <TD data-label="Diskon">{t.discountPercent}%</TD>
+                <TD data-label="Multiplier">×{t.pointMultiplier}</TD>
+                <TD data-label="Gratis/bln">{t.freeMinutesPerMonth}m</TD>
                 <TD>
                   <ConfirmDelete action={deleteTier} id={t.id} label={`Hapus tier ${t.name}?`} />
                 </TD>
@@ -67,7 +67,7 @@ export default async function TierPage() {
                 <Label>Nama</Label>
                 <Input name="name" required />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <Label>Min lifetime poin</Label>
                   <Input name="minLifetimePoints" type="number" min={0} required />

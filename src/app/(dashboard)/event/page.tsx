@@ -53,18 +53,18 @@ export default async function EventPage() {
             {events.length === 0 && <EmptyRow colSpan={6} />}
             {events.map((e) => (
               <TR key={e.id}>
-                <TD>
+                <TD data-label="Event">
                   <Link href={`/event/${e.id}/bracket`} className="font-medium text-indigo-700 hover:underline">
                     {e.title}
                   </Link>
                   {e.prizePool && <p className="text-xs text-slate-400">🏆 {e.prizePool}</p>}
                 </TD>
-                <TD className="text-sm">{formatDateTime(e.startAt)}</TD>
-                <TD>
+                <TD data-label="Mulai" className="text-sm">{formatDateTime(e.startAt)}</TD>
+                <TD data-label="Peserta">
                   {e.registeredCount}/{e.quota ?? "∞"}
                 </TD>
-                <TD>{e.entryFeeAmount ? formatRupiah(e.entryFeeAmount) : "Gratis"}</TD>
-                <TD>
+                <TD data-label="Biaya">{e.entryFeeAmount ? formatRupiah(e.entryFeeAmount) : "Gratis"}</TD>
+                <TD data-label="Status">
                   <Badge tone={STATUS_TONE[e.status]}>{e.status}</Badge>
                 </TD>
                 <TD>
@@ -101,7 +101,7 @@ export default async function EventPage() {
                 <Label>Deskripsi</Label>
                 <Textarea name="description" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <Label>Jenis</Label>
                   <Select name="type" defaultValue="tournament">

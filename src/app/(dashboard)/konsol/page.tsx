@@ -27,7 +27,7 @@ export default async function KonsolPage() {
         actionLabel="Tambah Unit"
         actionHref="/konsol/baru"
       />
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex flex-wrap gap-2">
         {[
           { href: "/konsol/tipe", label: "Tipe & Harga Dasar" },
           { href: "/konsol/game", label: "Katalog Game" },
@@ -55,21 +55,21 @@ export default async function KonsolPage() {
           {units.length === 0 && <EmptyRow colSpan={7} />}
           {units.map((u) => (
             <TR key={u.id}>
-              <TD>
+              <TD data-label="Kode">
                 <Link href={`/konsol/${u.id}`} className="font-medium text-indigo-700 hover:underline">
                   {u.code}
                 </Link>
               </TD>
-              <TD>
+              <TD data-label="Label">
                 <span className="flex items-center gap-1.5">
                   {u.displayLabel ?? "—"}
                   {u.rdmsDeviceId && <Badge tone="blue">TV terhubung</Badge>}
                 </span>
               </TD>
-              <TD>{u.consoleType?.name ?? "—"}</TD>
-              <TD>{u.roomType === "vip" ? <Badge tone="purple">VIP</Badge> : "Reguler"}</TD>
-              <TD>{formatRupiah(u.consoleType?.basePricePerHour)}</TD>
-              <TD>
+              <TD data-label="Tipe">{u.consoleType?.name ?? "—"}</TD>
+              <TD data-label="Ruangan">{u.roomType === "vip" ? <Badge tone="purple">VIP</Badge> : "Reguler"}</TD>
+              <TD data-label="Harga Dasar/Jam">{formatRupiah(u.consoleType?.basePricePerHour)}</TD>
+              <TD data-label="Status">
                 <Badge tone={STATUS_TONE[u.status]}>{CONSOLE_UNIT_STATUS_LABEL[u.status]}</Badge>
               </TD>
               <TD>
