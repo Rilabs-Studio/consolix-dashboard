@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentAdmin } from "@/lib/session";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
+import { RefreshableMain } from "@/components/layout/refreshable-main";
 
 export default async function DashboardLayout({
   children,
@@ -20,9 +21,11 @@ export default async function DashboardLayout({
           merentangkan kolom ini — flex item default-nya min-width:auto. */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Topbar name={admin.name} role={admin.role} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 pb-safe sm:p-5 lg:p-6">
+        {/* Tarik ke bawah untuk menyegarkan — PWA standalone tidak punya tombol
+            reload, dan scroller-nya <main>, bukan <body>. */}
+        <RefreshableMain className="flex-1 overflow-x-hidden overflow-y-auto p-4 pb-safe sm:p-5 lg:p-6">
           {children}
-        </main>
+        </RefreshableMain>
       </div>
     </div>
   );

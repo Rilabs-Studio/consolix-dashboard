@@ -3,6 +3,7 @@ import { signOut } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "./mobile-nav";
 import { PushToggle } from "./push-toggle";
+import { RefreshButton } from "./refresh-button";
 
 export function Topbar({ name, role }: { name?: string | null; role?: string }) {
   return (
@@ -12,6 +13,7 @@ export function Topbar({ name, role }: { name?: string | null; role?: string }) 
       <MobileNav role={role} />
       <span className="truncate font-semibold text-slate-900 md:hidden">Consolix Admin</span>
       <div className="ml-auto flex items-center gap-1 sm:gap-3">
+        <RefreshButton />
         <PushToggle />
         {/* Nama & role mengalah ke kontrol navigasi di layar tersempit. */}
         <div className="hidden text-right sm:block">

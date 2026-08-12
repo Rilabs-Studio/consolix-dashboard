@@ -29,6 +29,7 @@ src/server/actions/<modul>.ts
 | `RevenueChart` (Recharts, dipakai Overview & Keuangan) | `charts/revenue-chart.tsx` |
 | `NavList` (dipakai bersama Sidebar & MobileNav) + `getActiveHref` | `layout/nav-list.tsx`, `layout/nav.ts` |
 | `Sidebar` (desktop, `hidden md:flex`) / `MobileNav` (drawer, `md:hidden`) | `layout/sidebar.tsx`, `layout/mobile-nav.tsx` |
+| `RefreshableMain` (tarik-untuk-menyegarkan) + `RefreshButton` | `layout/refreshable-main.tsx`, `layout/refresh-button.tsx` |
 
 ## Aturan
 
@@ -75,3 +76,10 @@ Jangan pernah mendeteksi mobile lewat JS — tidak ada `useMediaQuery` di repo i
   mengekspor `viewportFit: "cover"`.
 - Tinggi viewport pakai `dvh`, bukan `vh` — bar browser mobile membuat `100vh`
   lebih tinggi dari area yang terlihat.
+- **Menyegarkan halaman.** PWA `display: standalone` tidak punya tombol reload,
+  dan scroller aplikasi ini `<main>` (bukan `<body>`) sehingga pull-to-refresh
+  bawaan browser tidak pernah aktif. Keduanya ditangani di shell: gestur tarik
+  di `RefreshableMain` dan tombol di Topbar (`RefreshButton`) — halaman baru
+  **tidak perlu** menambahkan apa pun. Keduanya memakai `router.refresh()`, yang
+  hanya mengambil ulang Server Component sehingga state client (papan Kasir,
+  keranjang POS) tetap utuh. Ambang & redaman gesturnya di `lib/pull-to-refresh.ts`.
