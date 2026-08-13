@@ -16,7 +16,7 @@ export function MerchProductForm() {
 
   return (
     <Card className="h-fit">
-      <CardContent className="pt-5">
+      <CardContent>
         <p className="mb-3 font-medium text-slate-900">Tambah Produk</p>
         <form
           ref={formRef}

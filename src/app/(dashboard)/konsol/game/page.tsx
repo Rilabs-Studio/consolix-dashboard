@@ -62,7 +62,7 @@ export default async function GamePage({
           </TBody>
         </Table>
         <Card>
-          <CardContent className="pt-5">
+          <CardContent>
             <p className="mb-3 font-medium text-slate-900">{editing ? `Ubah ${editing.title}` : "Tambah Game"}</p>
             <form action={saveGame} className="space-y-3">
               {editing && <input type="hidden" name="id" value={editing._id} />}

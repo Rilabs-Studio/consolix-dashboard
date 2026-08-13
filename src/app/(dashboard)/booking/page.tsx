@@ -65,7 +65,7 @@ export default async function BookingPage({
 
       {date && dayResult && (
         <Card className="mt-6">
-          <CardContent className="pt-5">
+          <CardContent>
             <div className="mb-3 flex items-center justify-between">
               <CardTitle>{formatDate(date, { dateStyle: "full" })}</CardTitle>
               <span className="text-sm text-slate-500">

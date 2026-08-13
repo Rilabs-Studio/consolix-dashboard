@@ -95,7 +95,7 @@ export default async function TopupPage({
           </TBody>
         </Table>
         <Card>
-          <CardContent className="pt-5">
+          <CardContent>
             <p className="mb-1 font-medium text-slate-900">Topup Tunai di Kasir</p>
             <p className="mb-3 text-xs text-slate-500">
               Langsung masuk saldo & tercatat di shift (butuh shift terbuka).

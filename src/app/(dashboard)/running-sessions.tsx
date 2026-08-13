@@ -30,7 +30,7 @@ export function RunningSessions({
   if (sessions.length === 0) {
     return (
       <Card>
-        <CardContent className="py-10 text-center text-sm text-slate-400">
+        <CardContent className="py-10 sm:py-10 text-center text-sm text-slate-400">
           Belum ada sesi berjalan.
         </CardContent>
       </Card>

@@ -13,7 +13,7 @@ export function HoursForm({ days }: { days: OperatingHourDay[] }) {
 
   return (
     <Card>
-      <CardContent className="pt-5">
+      <CardContent>
         <p className="mb-3 font-medium text-slate-900">Jadwal Mingguan</p>
         <form action={saveOperatingHours} className="space-y-2">
           {/* Header kolom hanya relevan pada tata letak grid (sm ke atas); di HP

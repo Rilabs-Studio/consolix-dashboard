@@ -67,7 +67,7 @@ export default async function HargaPage() {
           </TBody>
         </Table>
         <Card>
-          <CardContent className="pt-5">
+          <CardContent>
             <p className="mb-3 font-medium text-slate-900">Tambah Rule</p>
             <form action={createPriceRule} className="space-y-3">
               <div>

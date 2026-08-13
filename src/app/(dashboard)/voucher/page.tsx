@@ -73,7 +73,7 @@ export default async function VoucherPage() {
             </TBody>
           </Table>
           <Card>
-            <CardContent className="pt-5">
+            <CardContent>
               <p className="mb-3 font-medium text-slate-900">Tambah Template</p>
               <form action={saveVoucherTemplate} className="space-y-3">
                 <div>

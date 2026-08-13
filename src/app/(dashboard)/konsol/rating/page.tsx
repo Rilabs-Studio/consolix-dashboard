@@ -31,7 +31,7 @@ export default async function RatingPage({
           const avg = Number(a.avg);
           return (
             <Card key={a.consoleUnitId}>
-              <CardContent className="pt-4">
+              <CardContent>
                 <p className="text-sm text-slate-500">{unitCode(a.consoleUnitId)}</p>
                 <p className="mt-1 flex items-center gap-1 text-xl font-semibold text-slate-900">
                   <Star

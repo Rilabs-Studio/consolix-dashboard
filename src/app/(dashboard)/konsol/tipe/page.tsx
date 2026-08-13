@@ -59,7 +59,7 @@ export default async function TipeKonsolPage({
           </TBody>
         </Table>
         <Card>
-          <CardContent className="pt-5">
+          <CardContent>
             <p className="mb-3 font-medium text-slate-900">
               {editing ? `Ubah ${editing.name}` : "Tambah Tipe"}
             </p>

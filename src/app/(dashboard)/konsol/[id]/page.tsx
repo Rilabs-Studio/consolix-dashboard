@@ -29,7 +29,7 @@ export default async function KonsolDetailPage({ params }: { params: Promise<{ i
       <div className="grid gap-6 lg:grid-cols-2">
         <UnitForm action={updateConsoleUnit} types={types} devices={devices} unit={unit} />
         <Card>
-          <CardContent className="pt-5">
+          <CardContent>
             <p className="mb-3 font-medium text-slate-900">Game Terpasang ({unitGames.length})</p>
             <ul className="mb-4 divide-y divide-slate-100">
               {unitGames.length === 0 && <li className="py-2 text-sm text-slate-400">Belum ada game.</li>}

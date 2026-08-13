@@ -87,7 +87,7 @@ export default async function KeuanganPage({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {summary.map(({ label, value, tone }) => (
           <Card key={label}>
-            <CardContent className="pt-5">
+            <CardContent>
               <p className="text-sm text-slate-500">{label}</p>
               <p className={`mt-1 text-xl font-semibold ${tone}`}>{formatRupiah(value)}</p>
             </CardContent>

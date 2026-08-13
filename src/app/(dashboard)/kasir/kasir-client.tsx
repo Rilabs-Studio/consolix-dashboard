@@ -201,7 +201,7 @@ export function KasirClient({
       {/* Shift banner */}
       {shift ? (
         <Card>
-          <CardContent className="flex flex-wrap items-center gap-4 py-3 text-sm">
+          <CardContent className="flex flex-wrap items-center gap-4 py-3 sm:py-3 text-sm">
             <Badge tone="green">Shift {shift.code} terbuka</Badge>
             <span>Kas awal {formatRupiah(shift.cashOpening)}</span>
             {totals && (
@@ -217,7 +217,7 @@ export function KasirClient({
         </Card>
       ) : (
         <Card>
-          <CardContent className="flex flex-wrap items-center gap-3 py-3">
+          <CardContent className="flex flex-wrap items-center gap-3 py-3 sm:py-3">
             <Badge tone="red">Shift belum dibuka</Badge>
             <span className="text-sm text-slate-500">
               Pembayaran tunai/QRIS butuh shift terbuka.
@@ -231,7 +231,7 @@ export function KasirClient({
 
       {/* Check-in by code */}
       <Card>
-        <CardContent className="py-3">
+        <CardContent className="py-3 sm:py-3">
           <form
             action={submit(checkInBooking)}
             className="flex flex-wrap items-end gap-2"

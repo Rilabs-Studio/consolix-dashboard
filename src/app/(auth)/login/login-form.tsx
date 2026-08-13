@@ -11,7 +11,7 @@ export function LoginForm() {
 
   return (
     <Card>
-      <CardContent className="pt-5">
+      <CardContent>
         <form action={formAction} className="space-y-4">
           <div>
             <Label htmlFor="email">Email</Label>

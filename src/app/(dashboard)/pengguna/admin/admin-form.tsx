@@ -9,7 +9,7 @@ import { ADMIN_ROLES, ADMIN_ROLE_LABEL } from "@/lib/constants";
 export function AdminForm() {
   return (
     <Card>
-      <CardContent className="pt-5">
+      <CardContent>
         <p className="mb-3 font-medium text-slate-900">Tambah Akun</p>
         <form action={createAdmin} className="space-y-3">
           <div>

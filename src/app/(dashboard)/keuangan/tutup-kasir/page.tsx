@@ -20,7 +20,7 @@ export default async function TutupKasirPage() {
       />
       {current && (
         <Card className="mb-4">
-          <CardContent className="flex flex-wrap items-center gap-4 py-3 text-sm">
+          <CardContent className="flex flex-wrap items-center gap-4 py-3 sm:py-3 text-sm">
             <Badge tone="green">Shift {current.code} sedang berjalan</Badge>
             <span>Kas awal {formatRupiah(current.cashOpening)}</span>
             {current.totals && (

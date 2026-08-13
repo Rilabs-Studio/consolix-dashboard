@@ -92,7 +92,7 @@ export default async function PointShopPage() {
           </div>
         </div>
         <Card>
-          <CardContent className="pt-5">
+          <CardContent>
             <p className="mb-3 font-medium text-slate-900">Tambah Item</p>
             <form action={savePointShopItem} className="space-y-3">
               <div>

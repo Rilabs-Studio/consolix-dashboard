@@ -22,7 +22,7 @@ export function UnitForm({
 
   return (
     <Card>
-      <CardContent className="pt-5">
+      <CardContent>
         <form action={action} className="space-y-4">
           {unit && <input type="hidden" name="id" value={unit.id} />}
           <div className="grid max-w-lg gap-4 md:grid-cols-2">

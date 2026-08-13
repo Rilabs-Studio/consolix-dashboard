@@ -75,7 +75,7 @@ export default async function ChallengePage() {
           </TBody>
         </Table>
         <Card>
-          <CardContent className="pt-5">
+          <CardContent>
             <p className="mb-3 font-medium text-slate-900">Tambah Challenge</p>
             <form action={saveChallenge} className="space-y-3">
               <div>

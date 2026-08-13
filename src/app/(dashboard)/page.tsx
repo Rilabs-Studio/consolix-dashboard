@@ -68,7 +68,7 @@ export default async function OverviewPage() {
         {kpis.map(({ label, value, icon: Icon, hint, href }) => {
           const card = (
             <Card className="h-full transition-shadow hover:shadow-md">
-              <CardContent className="pt-5">
+              <CardContent>
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-slate-500">{label}</p>
                   <Icon className="h-5 w-5 text-indigo-600" />

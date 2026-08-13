@@ -90,7 +90,7 @@ export default async function EventPage() {
           </TBody>
         </Table>
         <Card>
-          <CardContent className="pt-5">
+          <CardContent>
             <p className="mb-3 font-medium text-slate-900">Buat Event</p>
             <form action={saveEvent} className="space-y-3">
               <div>

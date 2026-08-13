@@ -68,7 +68,7 @@ export default async function GamifikasiPage() {
             </TBody>
           </Table>
           <Card>
-            <CardContent className="pt-5">
+            <CardContent>
               <p className="mb-1 font-medium text-slate-900">Penyesuaian Poin Manual (admin)</p>
               <p className="mb-3 text-xs text-slate-500">Positif menambah, negatif mengurangi.</p>
               <form action={adjustPointsVoid} className="space-y-3">
@@ -119,7 +119,7 @@ export default async function GamifikasiPage() {
             </TBody>
           </Table>
           <Card>
-            <CardContent className="pt-5">
+            <CardContent>
               <p className="mb-3 font-medium text-slate-900">Tambah Badge</p>
               <form action={saveBadge} className="space-y-3">
                 <div className="grid gap-3 sm:grid-cols-2">

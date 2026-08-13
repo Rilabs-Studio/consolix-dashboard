@@ -87,7 +87,7 @@ export default async function PromoPage() {
           </TBody>
         </Table>
         <Card>
-          <CardContent className="pt-5">
+          <CardContent>
             <p className="mb-3 font-medium text-slate-900">Tambah Promo</p>
             <form action={savePromo} className="space-y-3">
               <div className="grid gap-3 sm:grid-cols-2">

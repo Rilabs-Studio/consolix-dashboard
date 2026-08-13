@@ -44,6 +44,15 @@ src/server/actions/<modul>.ts
 - Client component: hindari setState-di-effect (pakai adjust-during-render),
   hindari `useState(Date.now())` (impure — set di interval setelah mount).
 - Ikon dari `lucide-react`, warna aksen indigo/emerald mengikuti komponen yang ada.
+- **Kelas dasar komponen jangan memakai varian (`sm:`) untuk properti yang biasa
+  ditimpa pemanggil.** `cn()` = `twMerge`, dan `sm:pt-0` di kelas dasar **tidak**
+  bisa dibatalkan `pt-5` dari `className` (grup varian berbeda) — dulu ini membuat
+  semua `CardContent` tanpa `CardHeader` kehilangan padding atas di ≥`sm`. Kalau
+  kelas dasar punya `sm:p-5`, penimpaan vertikal pemanggil pun harus ikut
+  bervarian: `py-3 sm:py-3`.
+- `CardContent` sekarang selalu ber-padding penuh; `pt-0`-nya otomatis hanya saat
+  tepat di bawah `CardHeader` (`[[data-slot=card-header]+&]:pt-0`). Jangan
+  menambah `pt-*` manual untuk mengakalinya.
 
 ## Mobile-first (wajib)
 

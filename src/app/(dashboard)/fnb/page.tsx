@@ -96,7 +96,7 @@ export default async function FnbPage({
           </TBody>
         </Table>
         <Card>
-          <CardContent className="pt-5">
+          <CardContent>
             <p className="mb-3 font-medium text-slate-900">{editing ? `Ubah ${editing.name}` : "Tambah Item"}</p>
             <form action={saveFnbItem} className="space-y-3">
               {editing && <input type="hidden" name="id" value={editing.id} />}

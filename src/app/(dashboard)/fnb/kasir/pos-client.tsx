@@ -90,7 +90,7 @@ export function PosClient({
       <div>
         {menu.length === 0 ? (
           <Card>
-            <CardContent className="py-10 text-center text-sm text-slate-500">
+            <CardContent className="py-10 sm:py-10 text-center text-sm text-slate-500">
               Belum ada item menu yang aktif. Tambahkan lewat menu <strong>FnB</strong> di Master
               Data.
             </CardContent>
@@ -186,7 +186,7 @@ export function PosClient({
         )}
       >
         <Card className="h-fit rounded-b-none pb-safe lg:rounded-xl lg:pb-0">
-          <CardContent className="space-y-4 pt-6">
+          <CardContent className="space-y-4">
             <div>
               <div className="flex items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-slate-900">Keranjang</h2>
