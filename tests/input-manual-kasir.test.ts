@@ -142,6 +142,15 @@ describe("backfillSessionSchema", () => {
   it("menolak konsol kosong", () => {
     expect(backfillSessionSchema.safeParse({ ...valid, consoleUnitId: "" }).success).toBe(false);
   });
+
+  it("menerima sesi semalaman 7 jam — outlet 24 jam menjual durasi panjang", () => {
+    expect(backfillSessionSchema.safeParse({ ...valid, durationMinutes: 420 }).success).toBe(true);
+  });
+
+  it("menolak durasi di luar batas backend (30 & 540 menit)", () => {
+    expect(backfillSessionSchema.safeParse({ ...valid, durationMinutes: 30 }).success).toBe(false);
+    expect(backfillSessionSchema.safeParse({ ...valid, durationMinutes: 540 }).success).toBe(false);
+  });
 });
 
 describe("backfillSession", () => {

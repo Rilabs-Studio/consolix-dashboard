@@ -68,10 +68,16 @@ const STATUS_TONE: Record<string, "green" | "blue" | "yellow" | "red"> = {
 
 // Kelipatan 15 menit — di bawah itu backend menolak dengan INVALID_DURATION.
 const EXTEND_DURATIONS = [15, 30, 60, 120];
+// Sesi baru: 60–480 menit kelipatan 30 (MIN/MAX_BOOKING_MINUTES di backend).
+// Sampai 8 jam supaya outlet 24 jam bisa menjual sesi semalaman.
+const SESSION_DURATIONS = [60, 90, 120, 180, 240, 300, 360, 420, 480];
 const BROADCAST_SECONDS = [5, 10, 30, 60];
 
 function durationLabel(minutes: number): string {
-  return minutes >= 60 ? `${minutes / 60} jam` : `${minutes} menit`;
+  if (minutes < 60) return `${minutes} menit`;
+  const jam = Math.floor(minutes / 60);
+  const sisa = minutes % 60;
+  return sisa ? `${jam} jam ${sisa} menit` : `${jam} jam`;
 }
 
 function liveOrigin(): string {
@@ -321,9 +327,9 @@ export function KasirClient({
             <div>
               <Label>Durasi</Label>
               <Select name="durationMinutes" defaultValue="60">
-                {[60, 90, 120, 180, 240].map((m) => (
+                {SESSION_DURATIONS.map((m) => (
                   <option key={m} value={m}>
-                    {m} menit
+                    {durationLabel(m)}
                   </option>
                 ))}
               </Select>
@@ -414,9 +420,9 @@ export function KasirClient({
               <div>
                 <Label>Durasi</Label>
                 <Select name="durationMinutes" defaultValue="60">
-                  {[30, 60, 90, 120, 180, 240].map((m) => (
+                  {SESSION_DURATIONS.map((m) => (
                     <option key={m} value={m}>
-                      {m} menit
+                      {durationLabel(m)}
                     </option>
                   ))}
                 </Select>

@@ -120,7 +120,12 @@ export const fnbOrderSchema = z.object({
 export const backfillSessionSchema = z.object({
   consoleUnitId: z.string().uuid({ message: "Pilih konsol terlebih dulu" }),
   startAt: z.string().min(1, "Jam mulai wajib diisi"),
-  durationMinutes: z.coerce.number().int().min(30, "Durasi minimal 30 menit"),
+  // Selaras dengan MIN/MAX_BOOKING_MINUTES backend — 30 menit ditolak di sana.
+  durationMinutes: z.coerce
+    .number()
+    .int()
+    .min(60, "Durasi minimal 60 menit")
+    .max(480, "Durasi maksimal 480 menit"),
   paymentMethod: z.enum(["cash", "qris_manual"]),
   amount: rupiah.optional(),
   customerName: z.string().max(64).optional(),
