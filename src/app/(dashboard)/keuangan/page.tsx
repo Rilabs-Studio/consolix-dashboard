@@ -33,8 +33,12 @@ export default async function KeuanganPage({
     apiGet<OccupancyRow[]>("/admin/reports/occupancy", { from, to }),
   ]);
 
-  const summary = [
-    { label: "Pendapatan", value: pnl.revenue.total, tone: "text-slate-900" },
+  const pendapatan = [
+    { label: "Pendapatan Sewa PS", value: pnl.revenue.rental, tone: "text-slate-900" },
+    { label: "Pendapatan FnB", value: pnl.revenue.fnb, tone: "text-slate-900" },
+    { label: "Total Pendapatan", value: pnl.revenue.total, tone: "text-slate-900" },
+  ];
+  const labaRugi = [
     { label: "HPP FnB", value: -pnl.cogs, tone: "text-slate-900" },
     { label: "Laba Kotor", value: pnl.grossProfit, tone: "text-slate-900" },
     { label: "Pengeluaran", value: -pnl.totalExpenses, tone: "text-slate-900" },
@@ -84,15 +88,37 @@ export default async function KeuanganPage({
         </div>
       </form>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {summary.map(({ label, value, tone }) => (
-          <Card key={label}>
-            <CardContent>
-              <p className="text-sm text-slate-500">{label}</p>
-              <p className={`mt-1 text-xl font-semibold ${tone}`}>{formatRupiah(value)}</p>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-4">
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Pendapatan
+          </p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {pendapatan.map(({ label, value, tone }) => (
+              <Card key={label}>
+                <CardContent>
+                  <p className="text-sm text-slate-500">{label}</p>
+                  <p className={`mt-1 text-xl font-semibold ${tone}`}>{formatRupiah(value)}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Laba / Rugi
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {labaRugi.map(({ label, value, tone }) => (
+              <Card key={label}>
+                <CardContent>
+                  <p className="text-sm text-slate-500">{label}</p>
+                  <p className={`mt-1 text-xl font-semibold ${tone}`}>{formatRupiah(value)}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
 
       <Card className="mt-6">

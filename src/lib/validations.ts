@@ -133,6 +133,66 @@ export const backfillSessionSchema = z.object({
   reason: z.string().min(5, "Alasan minimal 5 karakter"),
 });
 
+// ---- Sesi kasir: jeda/simpan/batal + tabungan waktu ----
+
+/**
+ * Nomor HP Indonesia — terima gaya lokal (08…) maupun ternormalisasi (+62…,
+ * bentuk yang dikembalikan bill/booking backend); backend yang menormalkan.
+ */
+const phone = z
+  .string()
+  .regex(/^(08\d{7,13}|\+?628\d{7,12})$/, "Nomor HP tidak valid (08… atau +628…)");
+
+export const sessionIdSchema = z.object({ id: z.string().uuid() });
+
+/**
+ * Walk-in biasa atau redeem tabungan waktu. Memakai tabungan mensyaratkan
+ * nomor HP (kunci saldonya) dan boleh sependek 15 menit — sesi berbayar tetap
+ * minimal 60 menit seperti MIN_BOOKING_MINUTES backend.
+ */
+export const walkInSchema = z
+  .object({
+    consoleUnitId: z.string().uuid({ message: "Pilih konsol terlebih dulu" }),
+    durationMinutes: z.coerce.number().int().max(480, "Durasi maksimal 480 menit"),
+    customerName: z.string().max(64).optional(),
+    userPhone: z.string().max(20).optional(),
+    useTimeBank: z.boolean().default(false),
+  })
+  .superRefine((v, ctx) => {
+    if (v.useTimeBank && !v.userPhone) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["userPhone"],
+        message: "Nomor HP wajib diisi saat memakai tabungan waktu",
+      });
+    }
+    const min = v.useTimeBank ? 15 : 60;
+    if (v.durationMinutes < min) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["durationMinutes"],
+        message: `Durasi minimal ${min} menit`,
+      });
+    }
+  });
+
+/** Simpan sisa menit sebagai tabungan waktu, lalu tagih sesi yang berjalan. */
+export const saveSessionSchema = z.object({
+  id: z.string().uuid(),
+  customerPhone: phone,
+  paymentMethod: z.enum(["cash", "qris_manual"]),
+});
+
+/**
+ * Batalkan sesi tanpa menagih sewa. FnB yang telanjur disajikan tetap harus
+ * dibayar — metode bayarnya wajib hanya bila ada tagihan FnB (UI yang menjaga).
+ */
+export const cancelSessionSchema = z.object({
+  id: z.string().uuid(),
+  reason: z.string().min(5, "Alasan minimal 5 karakter").max(200),
+  fnbPaymentMethod: z.enum(["cash", "qris_manual"]).optional(),
+});
+
 export const cashTopupSchema = z.object({
   userId: z.string().uuid({ message: "Pilih member terlebih dulu" }),
   amount: z.coerce

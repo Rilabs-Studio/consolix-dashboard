@@ -12,7 +12,10 @@ import {
   checkInBooking,
   closeShift,
   extendSession,
+  getTimeBankBalance,
   openShift,
+  pauseSession,
+  resumeSession,
   startWalkIn,
   type ActionResult,
 } from "@/server/actions/pos";
@@ -31,6 +34,8 @@ import { Input, Label, Select } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { SubmitButton } from "@/components/forms/form-controls";
 import { BillDialog } from "./bill-dialog";
+import { SaveSessionDialog } from "./save-session-dialog";
+import { CancelSessionDialog } from "./cancel-session-dialog";
 import {
   SESSION_CARD_TONE,
   SessionTimer,
@@ -45,12 +50,15 @@ interface BoardBooking {
   startAt: string;
   endAt: string;
   customerName: string | null;
+  pausedAt?: string | null;
 }
 
 type Dialog =
   | { kind: "walkin"; unit: ConsoleUnit }
   | { kind: "checkout"; unit: ConsoleUnit; session: BoardBooking }
   | { kind: "extend"; unit: ConsoleUnit; session: BoardBooking }
+  | { kind: "save"; unit: ConsoleUnit; session: BoardBooking }
+  | { kind: "cancelSession"; unit: ConsoleUnit; session: BoardBooking }
   | { kind: "openShift" }
   | { kind: "closeShift" }
   | { kind: "backfill" }
@@ -95,8 +103,15 @@ function toBoardBooking(s: Booking): [string, BoardBooking] {
       startAt: s.startAt,
       endAt: s.endAt,
       customerName: s.customerName,
+      pausedAt: s.pausedAt ?? null,
     },
   ];
+}
+
+/** Sisa menit sesi — beku di titik jeda; dipakai dialog Simpan & Selesai. */
+function remainingMinutes(session: BoardBooking, now: number | null): number {
+  const ref = session.pausedAt ? new Date(session.pausedAt).getTime() : (now ?? Date.now());
+  return Math.max(0, Math.floor((new Date(session.endAt).getTime() - ref) / 60_000));
 }
 
 export function KasirClient({
@@ -157,7 +172,7 @@ export function KasirClient({
         if (data.booking) {
           setSessionByUnit((prev) => {
             const next = { ...prev };
-            if (["in_progress", "overtime"].includes(data.booking!.status)) {
+            if (["in_progress", "overtime", "paused"].includes(data.booking!.status)) {
               next[data.unitId] = data.booking!;
             } else if (next[data.unitId]?.id === data.booking!.id) {
               delete next[data.unitId];
@@ -189,6 +204,18 @@ export function KasirClient({
         setDialog(null);
         router.refresh();
       }
+    });
+  };
+
+  // Aksi satu-klik tanpa dialog (jeda/lanjutkan) — error tampil di banner papan.
+  const act = (action: (fd: FormData) => Promise<ActionResult>, fields: Record<string, string>) => {
+    setError(null);
+    startTransition(async () => {
+      const fd = new FormData();
+      for (const [k, v] of Object.entries(fields)) fd.set(k, v);
+      const result = await action(fd);
+      if (result.error) setError(result.error);
+      else router.refresh();
     });
   };
 
@@ -248,6 +275,7 @@ export function KasirClient({
             </div>
             <SubmitButton>Check-in</SubmitButton>
           </form>
+          <TimeBankLookup />
           {canBackfill && (
             <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
               <span className="text-sm text-slate-500">
@@ -311,6 +339,7 @@ export function KasirClient({
             device={u.rdmsDeviceId ? deviceById.get(u.rdmsDeviceId) : undefined}
             now={now}
             onDialog={setDialog}
+            onAct={act}
           />
         ))}
       </div>
@@ -322,29 +351,7 @@ export function KasirClient({
         title={dialog?.kind === "walkin" ? `Walk-in — Unit ${dialog.unit.code}` : undefined}
       >
         {dialog?.kind === "walkin" && (
-          <form action={submit(startWalkIn)} className="space-y-3">
-            <input type="hidden" name="consoleUnitId" value={dialog.unit.id} />
-            <div>
-              <Label>Durasi</Label>
-              <Select name="durationMinutes" defaultValue="60">
-                {SESSION_DURATIONS.map((m) => (
-                  <option key={m} value={m}>
-                    {durationLabel(m)}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <Label>Nama pelanggan</Label>
-              <Input name="customerName" placeholder="Walk-in" />
-            </div>
-            <div>
-              <Label>No. HP member (opsional — dapat poin)</Label>
-              <Input name="userPhone" placeholder="08…" />
-            </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            <SubmitButton className="w-full">Mulai Sesi</SubmitButton>
-          </form>
+          <WalkInForm unit={dialog.unit} error={error} onSubmit={submit(startWalkIn)} />
         )}
       </Modal>
 
@@ -386,6 +393,29 @@ export function KasirClient({
         open={dialog?.kind === "checkout"}
         sessionId={dialog?.kind === "checkout" ? dialog.session.id : null}
         onClose={() => setDialog(null)}
+      />
+
+      <SaveSessionDialog
+        key={dialog?.kind === "save" ? `save-${dialog.session.id}` : "save-closed"}
+        open={dialog?.kind === "save"}
+        sessionId={dialog?.kind === "save" ? dialog.session.id : null}
+        remainingMinutes={dialog?.kind === "save" ? remainingMinutes(dialog.session, now) : 0}
+        onClose={() => setDialog(null)}
+        onDone={() => {
+          setDialog(null);
+          router.refresh();
+        }}
+      />
+
+      <CancelSessionDialog
+        key={dialog?.kind === "cancelSession" ? `cancel-${dialog.session.id}` : "cancel-closed"}
+        open={dialog?.kind === "cancelSession"}
+        sessionId={dialog?.kind === "cancelSession" ? dialog.session.id : null}
+        onClose={() => setDialog(null)}
+        onDone={() => {
+          setDialog(null);
+          router.refresh();
+        }}
       />
 
       <Modal
@@ -555,14 +585,20 @@ function UnitCard({
   device,
   now,
   onDialog,
+  onAct,
 }: {
   unit: ConsoleUnit;
   session: BoardBooking | undefined;
   device: TvDevice | undefined;
   now: number | null;
   onDialog: (d: Dialog) => void;
+  onAct: (action: (fd: FormData) => Promise<ActionResult>, fields: Record<string, string>) => void;
 }) {
-  const tone = session ? sessionTone(session.endAt, now) : "idle";
+  // Jeda bisa datang dari status socket atau field pausedAt (snapshot RSC) —
+  // pausedAt kosong jatuh ke endAt agar timer tetap beku, bukan berjalan.
+  const paused = !!session && (session.status === "paused" || !!session.pausedAt);
+  const pausedRef = paused ? (session!.pausedAt ?? session!.endAt) : null;
+  const tone = session ? sessionTone(session.endAt, now, pausedRef) : "idle";
 
   return (
     <Card className={cn("flex h-full flex-col overflow-hidden", session && SESSION_CARD_TONE[tone])}>
@@ -600,24 +636,65 @@ function UnitCard({
                 {session.customerName ?? session.code}
               </p>
               <div className="mt-2">
-                <SessionTimer startAt={session.startAt} endAt={session.endAt} now={now} />
+                <SessionTimer
+                  startAt={session.startAt}
+                  endAt={session.endAt}
+                  now={now}
+                  pausedAt={pausedRef}
+                />
               </div>
             </div>
             <div className="mt-auto grid grid-cols-2 gap-2">
+              {paused ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => onAct(resumeSession, { id: session.id })}
+                >
+                  Lanjutkan
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => onAct(pauseSession, { id: session.id })}
+                >
+                  Jeda
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="outline"
                 className="w-full"
+                disabled={paused}
                 onClick={() => onDialog({ kind: "extend", unit, session })}
               >
                 Perpanjang
               </Button>
               <Button
                 size="sm"
-                className="w-full"
+                className="col-span-2 w-full"
                 onClick={() => onDialog({ kind: "checkout", unit, session })}
               >
                 Bayar
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="w-full"
+                onClick={() => onDialog({ kind: "save", unit, session })}
+              >
+                Simpan & Selesai
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="w-full text-red-600 hover:bg-red-50 hover:text-red-700"
+                onClick={() => onDialog({ kind: "cancelSession", unit, session })}
+              >
+                Batalkan Sesi
               </Button>
             </div>
           </>
@@ -687,6 +764,160 @@ function unitLabelForDevice(
   const unit = units.find((u) => u.rdmsDeviceId === deviceId);
   if (unit) return unit.displayLabel ?? unit.code;
   return devices.find((d) => d.id === deviceId)?.name ?? deviceId;
+}
+
+/**
+ * Form walk-in dengan tabungan waktu: nomor HP yang diketik dicek saldonya
+ * (debounce, stale-guard), dan bila ada, kasir bisa memakai menit tersimpan —
+ * durasi lalu dibatasi ≤ saldo (redeem tidak boleh melebihi yang tersimpan).
+ */
+function WalkInForm({
+  unit,
+  error,
+  onSubmit,
+}: {
+  unit: ConsoleUnit;
+  error: string | null;
+  onSubmit: (fd: FormData) => void;
+}) {
+  const [phone, setPhone] = useState("");
+  const [balance, setBalance] = useState<number | null>(null);
+  const [useBank, setUseBank] = useState(false);
+
+  // Nomor berubah → saldo lama basi. Reset saat render (pola prevUnits di
+  // KasirClient), bukan di dalam efek — efeknya murni fetch ter-debounce.
+  const digits = phone.replace(/\D/g, "");
+  const [prevDigits, setPrevDigits] = useState(digits);
+  if (prevDigits !== digits) {
+    setPrevDigits(digits);
+    setBalance(null);
+    setUseBank(false);
+  }
+
+  useEffect(() => {
+    if (digits.length < 10) return;
+    let stale = false;
+    const t = setTimeout(() => {
+      getTimeBankBalance(digits)
+        .then((res) => {
+          if (!stale) setBalance(res?.account.balanceMinutes ?? 0);
+        })
+        .catch(() => {
+          if (!stale) setBalance(null);
+        });
+    }, 300);
+    return () => {
+      stale = true;
+      clearTimeout(t);
+    };
+  }, [digits]);
+
+  const bank = balance ?? 0;
+  // Redeem minimal 15 menit — saldo di bawah itu belum bisa dipakai.
+  const canRedeem = bank >= 15;
+  const bankOptions = SESSION_DURATIONS.filter((m) => m <= bank);
+  const options = useBank && canRedeem ? bankOptions : SESSION_DURATIONS;
+
+  return (
+    <form action={onSubmit} className="space-y-3">
+      <input type="hidden" name="consoleUnitId" value={unit.id} />
+      <div>
+        <Label>Durasi</Label>
+        {/* key me-remount select saat mode berganti agar defaultValue ikut ganti */}
+        <Select
+          key={useBank ? "bank" : "normal"}
+          name="durationMinutes"
+          defaultValue={String(options[0] ?? bank)}
+        >
+          {options.map((m) => (
+            <option key={m} value={m}>
+              {durationLabel(m)}
+            </option>
+          ))}
+          {useBank && canRedeem && !bankOptions.includes(bank) && (
+            <option value={bank}>Semua sisa ({bank} menit)</option>
+          )}
+        </Select>
+      </div>
+      <div>
+        <Label>Nama pelanggan</Label>
+        <Input name="customerName" placeholder="Walk-in" />
+      </div>
+      <div>
+        <Label>No. HP member (opsional — dapat poin)</Label>
+        <Input
+          name="userPhone"
+          placeholder="08…"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+      </div>
+      {balance !== null && balance > 0 && (
+        <div className="rounded-md bg-sky-50 px-3 py-2 text-sm text-sky-800">
+          <p>
+            Tabungan waktu: <b>{balance} menit</b>
+          </p>
+          {canRedeem ? (
+            <label className="mt-1 flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="useTimeBank"
+                value="true"
+                checked={useBank}
+                onChange={(e) => setUseBank(e.target.checked)}
+                className="accent-emerald-600"
+              />
+              Pakai tabungan waktu
+            </label>
+          ) : (
+            <p className="mt-1 text-xs">Minimal 15 menit untuk bisa dipakai.</p>
+          )}
+        </div>
+      )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <SubmitButton className="w-full">Mulai Sesi</SubmitButton>
+    </form>
+  );
+}
+
+/** Cek saldo tabungan waktu sebuah nomor tanpa harus memulai sesi. */
+function TimeBankLookup() {
+  const [phone, setPhone] = useState("");
+  const [result, setResult] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  const check = () => {
+    if (!phone.trim()) return;
+    startTransition(async () => {
+      try {
+        const res = await getTimeBankBalance(phone.trim());
+        setResult(res ? `Sisa: ${res.account.balanceMinutes} menit` : "Belum ada tabungan");
+      } catch {
+        setResult("Gagal memeriksa — coba lagi");
+      }
+    });
+  };
+
+  return (
+    <div className="mt-3 flex flex-wrap items-end gap-2 border-t border-slate-100 pt-3">
+      <div className="min-w-0 flex-1 sm:flex-none">
+        <Label>Tabungan waktu member</Label>
+        <Input
+          placeholder="08…"
+          className="sm:w-44"
+          value={phone}
+          onChange={(e) => {
+            setPhone(e.target.value);
+            setResult(null);
+          }}
+        />
+      </div>
+      <Button variant="outline" disabled={pending || !phone.trim()} onClick={check}>
+        {pending ? "Memeriksa…" : "Cek Tabungan Waktu"}
+      </Button>
+      {result && <span className="pb-2 text-sm font-medium text-slate-700">{result}</span>}
+    </div>
+  );
 }
 
 function CloseShiftForm({

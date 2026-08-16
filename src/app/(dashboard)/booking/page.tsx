@@ -23,6 +23,7 @@ const TONE: Record<string, "green" | "blue" | "yellow" | "red" | "default" | "pu
   checked_in: "blue",
   in_progress: "green",
   overtime: "purple",
+  paused: "blue",
   completed: "default",
   cancelled: "red",
   no_show: "red",

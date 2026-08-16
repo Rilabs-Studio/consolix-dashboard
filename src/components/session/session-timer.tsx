@@ -23,12 +23,18 @@ export function useNow(): number | null {
   return now;
 }
 
-export type SessionTone = "idle" | "running" | "warning" | "expired";
+export type SessionTone = "idle" | "running" | "warning" | "expired" | "paused";
 
 /** Ambang "hampir habis" — sejalan dengan SESSION_WARNING_MINUTES di backend. */
 const WARNING_SECONDS = 10 * 60;
 
-export function sessionTone(endAt: string, now: number | null): SessionTone {
+export function sessionTone(
+  endAt: string,
+  now: number | null,
+  pausedAt?: string | null
+): SessionTone {
+  // Jeda ditentukan data, bukan jam — aman dirender di server tanpa `now`.
+  if (pausedAt) return "paused";
   if (now === null) return "idle";
   const remaining = Math.floor((new Date(endAt).getTime() - now) / 1000);
   if (remaining <= 0) return "expired";
@@ -40,6 +46,7 @@ const TONE_TEXT: Record<SessionTone, string> = {
   running: "text-emerald-600",
   warning: "text-amber-600",
   expired: "text-red-600",
+  paused: "text-sky-600",
 };
 
 const TONE_BAR: Record<SessionTone, string> = {
@@ -47,6 +54,7 @@ const TONE_BAR: Record<SessionTone, string> = {
   running: "bg-emerald-500",
   warning: "bg-amber-500",
   expired: "bg-red-500",
+  paused: "bg-sky-500",
 };
 
 export const SESSION_CARD_TONE: Record<SessionTone, string> = {
@@ -54,6 +62,7 @@ export const SESSION_CARD_TONE: Record<SessionTone, string> = {
   running: "border-emerald-200",
   warning: "border-amber-300 bg-amber-50/40",
   expired: "border-red-300 bg-red-50/40",
+  paused: "border-sky-300 bg-sky-50/40",
 };
 
 function clock(totalSeconds: number): string {
@@ -72,19 +81,24 @@ export function SessionTimer({
   startAt,
   endAt,
   now,
+  pausedAt,
   size = "lg",
 }: {
   startAt: string;
   endAt: string;
   now: number | null;
+  /** Terisi saat sesi dijeda — sisa waktu dibekukan di titik ini. */
+  pausedAt?: string | null;
   size?: "lg" | "sm";
 }) {
-  const tone = sessionTone(endAt, now);
+  const tone = sessionTone(endAt, now, pausedAt);
   const end = new Date(endAt).getTime();
   const start = new Date(startAt).getTime();
-  const remaining = now === null ? 0 : Math.max(0, Math.floor((end - now) / 1000));
+  // Saat dijeda, sisa waktu dihitung dari titik jeda — beku, bukan berjalan.
+  const ref = pausedAt ? new Date(pausedAt).getTime() : now;
+  const remaining = ref === null ? 0 : Math.max(0, Math.floor((end - ref) / 1000));
   const total = Math.max(1, Math.floor((end - start) / 1000));
-  const progress = now === null ? 0 : Math.min(100, Math.max(0, (remaining / total) * 100));
+  const progress = ref === null ? 0 : Math.min(100, Math.max(0, (remaining / total) * 100));
 
   return (
     <div>
@@ -95,7 +109,7 @@ export function SessionTimer({
           TONE_TEXT[tone]
         )}
       >
-        {now === null ? "--:--:--" : clock(remaining)}
+        {ref === null ? "--:--:--" : clock(remaining)}
       </p>
       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
         <div
@@ -104,7 +118,9 @@ export function SessionTimer({
         />
       </div>
       <p className="mt-1.5 text-xs text-slate-500">
-        {tone === "expired" ? (
+        {tone === "paused" ? (
+          <span className="font-medium text-sky-600">Dijeda — sisa waktu beku</span>
+        ) : tone === "expired" ? (
           <span className="font-medium text-red-600">Waktu habis — tunggu pembayaran</span>
         ) : (
           <>selesai {new Date(endAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}</>

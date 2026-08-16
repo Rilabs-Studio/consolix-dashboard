@@ -13,7 +13,14 @@ import {
 import type { RevenuePoint } from "@/lib/types";
 import { formatRupiah } from "@/lib/utils";
 
-/** Stacked daily revenue bars (rental + FnB). Used by Overview & Keuangan. */
+/** Satu peta label untuk Tooltip + Legend agar keduanya tidak bisa berbeda. */
+const SERIES_LABEL: Record<string, string> = {
+  rental: "Sewa PS",
+  fnb: "FnB",
+  topup: "Topup",
+};
+
+/** Stacked daily revenue bars (rental + FnB + topup). Used by Overview & Keuangan. */
 export function RevenueChart({ data }: { data: RevenuePoint[] }) {
   const rows = data.map((d) => ({ ...d, label: d.day.slice(5) }));
   return (
@@ -41,13 +48,14 @@ export function RevenueChart({ data }: { data: RevenuePoint[] }) {
           <Tooltip
             formatter={(value, name) => [
               formatRupiah(Number(value)),
-              name === "rental" ? "Rental" : "FnB",
+              SERIES_LABEL[String(name)] ?? String(name),
             ]}
             labelFormatter={(label) => `Tanggal ${label}`}
           />
-          <Legend formatter={(v) => (v === "rental" ? "Rental" : "FnB")} />
+          <Legend formatter={(v) => SERIES_LABEL[String(v)] ?? String(v)} />
           <Bar dataKey="rental" stackId="rev" fill="#4f46e5" radius={[0, 0, 0, 0]} />
-          <Bar dataKey="fnb" stackId="rev" fill="#06b6d4" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="fnb" stackId="rev" fill="#06b6d4" radius={[0, 0, 0, 0]} />
+          <Bar dataKey="topup" stackId="rev" fill="#f59e0b" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

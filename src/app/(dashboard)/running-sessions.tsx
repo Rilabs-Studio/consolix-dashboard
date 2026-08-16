@@ -41,7 +41,7 @@ export function RunningSessions({
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {sessions.map((s) => {
         const unit = unitById.get(s.consoleUnitId);
-        const tone = sessionTone(s.endAt, now);
+        const tone = sessionTone(s.endAt, now, s.pausedAt);
         return (
           <Link key={s.id} href="/kasir" className="block">
             <Card
@@ -64,7 +64,13 @@ export function RunningSessions({
                     {s.type === "walk_in" ? "Walk-in" : "Booking"}
                   </Badge>
                 </div>
-                <SessionTimer startAt={s.startAt} endAt={s.endAt} now={now} size="sm" />
+                <SessionTimer
+                  startAt={s.startAt}
+                  endAt={s.endAt}
+                  now={now}
+                  pausedAt={s.pausedAt}
+                  size="sm"
+                />
               </CardContent>
             </Card>
           </Link>

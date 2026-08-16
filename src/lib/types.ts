@@ -143,6 +143,8 @@ export interface Booking {
   durationMinutes: number;
   actualStartAt: string | null;
   actualEndAt: string | null;
+  /** Terisi saat sesi dijeda kasir — sisa waktu beku sampai dilanjutkan. */
+  pausedAt?: string | null;
   baseAmount: number;
   extensionAmount: number;
   overtimeAmount: number;
@@ -201,6 +203,12 @@ export interface SessionBill {
   };
   discountAmount: number;
   totalAmount: number;
+}
+
+/** GET /admin/time-bank?phone= — saldo menit tersimpan milik satu nomor. */
+export interface TimeBankBalance {
+  account: { phone: string; userId: string | null; balanceMinutes: number };
+  entries: unknown[];
 }
 
 export interface ShiftTotals {
